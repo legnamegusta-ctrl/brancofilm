@@ -6,7 +6,7 @@ import {
   doc, updateDoc, deleteDoc,
   orderBy, serverTimestamp,
   startAfter, limit as limitFn,
-  Timestamp
+  Timestamp, setDoc, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // --- Coleções ---
@@ -190,4 +190,121 @@ export async function getNextSchedules(limit = 5) {
   );
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// --- Relatórios ---
+export async function getOrdersFinished({ from, to } = {}) {
+  let q = query(ordersCollection, where('status', '==', 'concluido'));
+  if (from) q = query(q, where('closedAt', '>=', from));
+  if (to)   q = query(q, where('closedAt', '<=', to));
+  q = query(q, orderBy('closedAt', 'asc'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+export async function getOrdersByStatus({ from, to } = {}) {
+  let q = ordersCollection;
+  if (from) q = query(q, where('createdAt', '>=', from));
+  if (to)   q = query(q, where('createdAt', '<=', to));
+  const snap = await getDocs(q);
+  const counts = {};
+  snap.docs.forEach(d => {
+    const st = d.data().status || 'novo';
+    counts[st] = (counts[st] || 0) + 1;
+  });
+  return counts;
+}
+
+export async function getCycleDurations({ from, to } = {}) {
+  const orders = await getOrdersFinished({ from, to });
+  const durations = orders.map(o => {
+    const start = o.createdAt?.toDate();
+    const end = o.closedAt?.toDate() || o.updatedAt?.toDate();
+    return start && end ? end.getTime() - start.getTime() : null;
+  }).filter(Boolean);
+  const avg = durations.length ? durations.reduce((a,b)=>a+b,0) / durations.length : 0;
+  return { durations, avg };
+}
+
+// --- Usuários ---
+const usersCollection = collection(db, 'users');
+
+export async function ensureUserDocOnLogin(user) {
+  if (!user) return null;
+  const ref = doc(usersCollection, user.uid);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) {
+    await setDoc(ref, {
+      uid: user.uid,
+      email: user.email || '',
+      displayName: user.displayName || '',
+      role: 'user',
+      active: true,
+      createdAt: serverTimestamp()
+    });
+    return { uid: user.uid, email: user.email, displayName: user.displayName, role: 'user', active: true };
+  }
+  return { id: snap.id, ...snap.data() };
+}
+
+export async function getUsers() {
+  const q = query(usersCollection, orderBy('createdAt', 'desc'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+export function updateUserRole(uid, role) {
+  return updateDoc(doc(usersCollection, uid), { role });
+}
+
+export function toggleUserActive(uid, active) {
+  return updateDoc(doc(usersCollection, uid), { active });
+}
+
+// --- Backup ---
+export async function exportCollections(keys = []) {
+  const out = {};
+  for (const k of keys) {
+    const snap = await getDocs(collection(db, k));
+    out[k] = snap.docs.map(d => {
+      const data = { id: d.id, ...d.data() };
+      Object.keys(data).forEach(key => {
+        if (data[key] instanceof Timestamp) {
+          data[key] = data[key].toDate().toISOString();
+        }
+      });
+      return data;
+    });
+  }
+  return JSON.stringify(out);
+}
+
+export async function importCollections(json, opts = { mode: 'merge', collections: [] }, progressCb) {
+  const data = typeof json === 'string' ? JSON.parse(json) : json;
+  for (const key of opts.collections) {
+    const coll = collection(db, key);
+    if (opts.mode === 'overwrite') {
+      const snap = await getDocs(coll);
+      const batch = writeBatch(db);
+      snap.docs.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
+    const docs = data[key] || [];
+    let i = 0;
+    while (i < docs.length) {
+      const batch = writeBatch(db);
+      docs.slice(i, i + 500).forEach(obj => {
+        const { id, ...rest } = obj;
+        Object.keys(rest).forEach(k => {
+          if (typeof rest[k] === 'string' && rest[k].match(/T/)) {
+            rest[k] = Timestamp.fromDate(new Date(rest[k]));
+          }
+        });
+        batch.set(doc(coll, id), rest, { merge: true });
+      });
+      await batch.commit();
+      i += 500;
+      if (progressCb) progressCb(Math.min(i / docs.length, 1));
+    }
+  }
 }

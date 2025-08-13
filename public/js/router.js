@@ -3,6 +3,9 @@ import { renderServicosView } from './views/servicosView.js';
 import { renderAgendaView } from './views/agendaView.js';
 import { renderOrdersView } from './views/ordersView.js';
 import { renderDashboardView } from './views/dashboardView.js';
+import { renderReportsView } from './views/reportsView.js';
+import { renderSettingsView } from './views/settingsView.js';
+import { renderUsersView } from './views/usersView.js';
 import { auth } from './firebase-config.js';
 
 const appContainer = document.getElementById('app-container');
@@ -13,6 +16,9 @@ const routes = {
   '#clientes': renderClientesView,
   '#servicos': renderServicosView,
   '#orders': renderOrdersView,
+  '#relatorios': renderReportsView,
+  '#config': renderSettingsView,
+  '#usuarios': renderUsersView,
 };
 
 export function navigate() {
@@ -35,6 +41,13 @@ export function navigate() {
 
   const [mainPath, ...rest] = hash.split('/');
   const param = rest.join('/') || null;
+
+  const adminRoutes = ['#usuarios', '#config'];
+  const role = window.sessionState?.role;
+  if (adminRoutes.includes(mainPath) && role !== 'admin') {
+    location.hash = '#dashboard';
+    return;
+  }
 
   const navLinks = document.querySelectorAll('#main-nav a');
   navLinks.forEach(link => link.classList.remove('active'));
