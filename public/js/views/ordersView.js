@@ -2,10 +2,11 @@
 import {
   getOrders, getOrderById, addOrder, updateOrder, deleteOrder,
   getCustomers, getCustomerById,
-  getVehiclesForCustomer, getServicos
+  getVehiclesForCustomer, getServicos, getUsers
 } from '../services/firestoreService.js';
 import { listOrderPhotos, uploadOrderPhotos, deleteOrderPhoto } from '../storageService.js';
-import { Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { db } from '../firebase-config.js';
+import { Timestamp, collection as coll, addDoc, getDocs, query, where, orderBy, limit as limitFn } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const appContainer = document.getElementById('app-container');
 const modalPlaceholder = document.getElementById('modal-placeholder');
@@ -110,6 +111,11 @@ async function renderOrderDetail(orderId) {
   if (order?.customerId) {
     vehicles = await getVehiclesForCustomer(order.customerId);
   }
+  let users = [];
+  const role = window.sessionState?.role;
+  if (role === 'admin') {
+    users = await getUsers();
+  }
 
   const itemsSet = new Set(order?.items?.map(i => i.servicoId));
   appContainer.innerHTML = `
@@ -141,6 +147,12 @@ async function renderOrderDetail(orderId) {
             ${['novo','em_andamento','concluido','cancelado'].map(st=>`<option value="${st}" ${order?.status===st?'selected':''}>${st}</option>`).join('')}
           </select>
         </label>
+        ${role==='admin'?`<label>Responsável
+          <select id="oAssigned">
+            <option value="">—</option>
+            ${users.map(u=>`<option value="${u.id}" ${order?.assignedTo===u.id?'selected':''}>${esc(u.email||u.displayName||u.id)}</option>`).join('')}
+          </select>
+        </label>`:''}
         <label>Notas <textarea id="oNotes">${esc(order?.notes||'')}</textarea></label>
         <label>Início <input id="oStart" type="datetime-local" value="${toLocal(order?.scheduledStart)||''}" /></label>
         <label>Fim <input id="oEnd" type="datetime-local" value="${toLocal(order?.scheduledEnd)||''}" /></label>
@@ -148,11 +160,13 @@ async function renderOrderDetail(orderId) {
           <button class="btn">${isNew?'Criar':'Salvar'}</button>
           ${!isNew?'<button type="button" id="oDelete" class="link">Excluir</button>':''}
           <button type="button" id="oBack" class="link">Voltar</button>
+          ${!isNew?'<button type="button" id="oSendMail" class="link">Enviar e-mail</button>':''}
           ${!isNew?'<button type="button" id="oPrint" class="link no-print">Imprimir</button>':''}
           ${!isNew?'<button type="button" id="oCSV" class="link">CSV</button>':''}
         </div>
       </form>
     </section>
+    ${!isNew?'<section class="card mt"><h3>Histórico</h3><ul id="history-list"></ul></section>':''}
   `;
 
   document.getElementById('oCustomer').onchange = async e => {
@@ -173,6 +187,17 @@ async function renderOrderDetail(orderId) {
     };
     document.getElementById('oPrint').onclick = () => window.print();
     document.getElementById('oCSV').onclick = () => exportCSV(orderId, order);
+    document.getElementById('oSendMail').onclick = async () => {
+      const customer = clients.find(c=>c.id===document.getElementById('oCustomer').value) || {};
+      try {
+        await addDoc(coll(db, 'mail'), {
+          to: [customer.email || ''],
+          message: { subject: 'Confirmação de agendamento', text: 'Sua OS foi agendada.' }
+        });
+        alert('Email enfileirado');
+      } catch(err) { alert('Falha ao enfileirar email'); }
+    };
+    loadHistory(orderId);
   }
 
   document.getElementById('order-form').onsubmit = async ev => {
@@ -186,6 +211,7 @@ async function renderOrderDetail(orderId) {
     const notes = document.getElementById('oNotes').value.trim();
     const startVal = document.getElementById('oStart').value;
     const endVal   = document.getElementById('oEnd').value;
+    const assignedTo = role==='admin' ? (document.getElementById('oAssigned').value || null) : (order?.assignedTo || null);
     const items = Array.from(document.querySelectorAll('#oServices input:checked')).map(inp => ({
       servicoId: inp.value,
       name: inp.dataset.name,
@@ -202,6 +228,7 @@ async function renderOrderDetail(orderId) {
       total,
       status,
       notes,
+      assignedTo,
       scheduledStart: startVal ? Timestamp.fromDate(new Date(startVal)) : null,
       scheduledEnd: endVal ? Timestamp.fromDate(new Date(endVal)) : null
     };
@@ -211,6 +238,24 @@ async function renderOrderDetail(orderId) {
     location.hash = `#orders/${newId}`;
   };
   if (!isNew) initPhotos(orderId);
+}
+
+async function loadHistory(orderId) {
+  const q = query(
+    coll(db, 'auditLogs'),
+    where('collection','==','orders'),
+    where('docId','==', orderId),
+    orderBy('ts','desc'),
+    limitFn(20)
+  );
+  const snap = await getDocs(q);
+  const ul = document.getElementById('history-list');
+  if (!ul) return;
+  ul.innerHTML = snap.docs.map(d=>{
+    const data = d.data();
+    const date = data.ts?.toDate ? data.ts.toDate().toLocaleString() : '';
+    return `<li>${esc(date)} - ${esc(data.actorEmail||'')} ${esc(data.action)}</li>`;
+  }).join('') || '<li class="muted">Sem histórico</li>';
 }
 
 function calcTotal() {

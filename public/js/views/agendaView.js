@@ -1,5 +1,5 @@
 // js/views/agendaView.js
-import { getOrders, addOrder, updateOrder, getCustomers, getCustomerById, getVehiclesForCustomer, getServicos } from '../services/firestoreService.js';
+import { getOrders, addOrder, updateOrder, getCustomers, getCustomerById, getVehiclesForCustomer, getServicos, getVehicleById, hasScheduleConflict } from '../services/firestoreService.js';
 import { Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const appContainer = document.getElementById('app-container');
@@ -10,50 +10,91 @@ export const renderAgendaView = async () => {
   appContainer.innerHTML = `
     <section>
       <h2>Agenda</h2>
+      <div class="grid mt">
+        <input id="searchAgenda" placeholder="Buscar cliente/placa" />
+        <div>
+          <button class="btn" id="viewMonth">Mês</button>
+          <button class="btn" id="viewWeek">Semana</button>
+          <button class="btn" id="viewDay">Dia</button>
+        </div>
+      </div>
       <div id="calendar-container" class="card" style="padding:8px"></div>
       <div class="mt"><button class="btn" id="btnNewEvent">Novo agendamento</button></div>
     </section>
   `;
   const orders = await getOrders();
   const customers = {};
+  const vehicles = {};
   for (const o of orders) {
     if (!customers[o.customerId]) {
       customers[o.customerId] = (await getCustomerById(o.customerId))?.name || '';
     }
+    if (o.vehicleId && !vehicles[o.vehicleId]) {
+      vehicles[o.vehicleId] = (await getVehicleById(o.vehicleId))?.plate || '';
+    }
   }
   const events = orders.filter(o=>o.scheduledStart).map(o => ({
     id: o.id,
-    title: `${customers[o.customerId] || ''} - ${o.items?.[0]?.name || ''}`,
+    title: `${customers[o.customerId] || ''} - ${vehicles[o.vehicleId] || ''}`,
     start: o.scheduledStart.seconds ? new Date(o.scheduledStart.seconds*1000) : o.scheduledStart,
-    end: o.scheduledEnd?.seconds ? new Date(o.scheduledEnd.seconds*1000) : (o.scheduledEnd || null)
+    end: o.scheduledEnd?.seconds ? new Date(o.scheduledEnd.seconds*1000) : (o.scheduledEnd || null),
+    classNames: [o.status],
+    extendedProps: { customerId: o.customerId, vehicleId: o.vehicleId, customerName: customers[o.customerId]||'', plate: vehicles[o.vehicleId]||'' }
   }));
   const { Calendar } = window;
   calendar = new Calendar(document.getElementById('calendar-container'), {
     initialView: 'dayGridMonth',
+    selectable: true,
     height: 'auto',
     events,
     editable: true,
+    select: info => openNewModal(info.start, info.end),
+    dateClick: info => openNewModal(info.date),
     eventClick: info => { location.hash = `#orders/${info.event.id}`; },
     eventDrop: async info => {
-      await updateOrder(info.event.id, {
-        scheduledStart: Timestamp.fromDate(info.event.start),
-        scheduledEnd: info.event.end ? Timestamp.fromDate(info.event.end) : null
+      const ev = info.event;
+      const st = ev.start;
+      const en = ev.end;
+      const { customerId, vehicleId } = ev.extendedProps;
+      const conflict = await hasScheduleConflict({ customerId, vehicleId, start: st, end: en, excludeOrderId: ev.id });
+      if (conflict) { showToast('Conflito de agenda'); info.revert(); return; }
+      await updateOrder(ev.id, {
+        scheduledStart: Timestamp.fromDate(st),
+        scheduledEnd: en ? Timestamp.fromDate(en) : null
       });
-      window.dispatchEvent(new Event('orders-changed'));
+      window.dispatchEvent(new Event('orders:changed'));
     },
     eventResize: async info => {
-      await updateOrder(info.event.id, {
-        scheduledStart: Timestamp.fromDate(info.event.start),
-        scheduledEnd: info.event.end ? Timestamp.fromDate(info.event.end) : null
+      const ev = info.event;
+      const st = ev.start;
+      const en = ev.end;
+      const { customerId, vehicleId } = ev.extendedProps;
+      const conflict = await hasScheduleConflict({ customerId, vehicleId, start: st, end: en, excludeOrderId: ev.id });
+      if (conflict) { showToast('Conflito de agenda'); info.revert(); return; }
+      await updateOrder(ev.id, {
+        scheduledStart: Timestamp.fromDate(st),
+        scheduledEnd: en ? Timestamp.fromDate(en) : null
       });
-      window.dispatchEvent(new Event('orders-changed'));
+      window.dispatchEvent(new Event('orders:changed'));
     }
   });
   calendar.render();
   document.getElementById('btnNewEvent').onclick = () => openNewModal();
+  document.getElementById('viewMonth').onclick = ()=>calendar.changeView('dayGridMonth');
+  document.getElementById('viewWeek').onclick = ()=>calendar.changeView('timeGridWeek');
+  document.getElementById('viewDay').onclick = ()=>calendar.changeView('timeGridDay');
+  const search = document.getElementById('searchAgenda');
+  search.oninput = () => {
+    const t = search.value.toLowerCase();
+    calendar.getEvents().forEach(ev => {
+      const { customerName, plate } = ev.extendedProps;
+      const match = customerName.toLowerCase().includes(t) || plate.toLowerCase().includes(t);
+      ev.setProp('display', match ? 'auto' : 'none');
+    });
+  };
 };
 
-async function openNewModal() {
+async function openNewModal(start=null, end=null) {
   const clients = await getCustomers();
   const servicos = await getServicos();
   modalPlaceholder.innerHTML = `
@@ -76,8 +117,8 @@ async function openNewModal() {
               ${servicos.map(s=>`<option value="${s.id}" data-name="${attr(s.name)}" data-price="${Number(s.price)||0}">${esc(s.name)}</option>`).join('')}
             </select>
           </label>
-          <label>Início* <input id="aStart" type="datetime-local" required /></label>
-          <label>Fim <input id="aEnd" type="datetime-local" /></label>
+          <label>Início* <input id="aStart" type="datetime-local" required value="${start?toLocal(start):''}" /></label>
+          <label>Fim <input id="aEnd" type="datetime-local" value="${end?toLocal(end):''}" /></label>
           <label>Notas <textarea id="aNotes"></textarea></label>
           <div class="card-actions">
             <button class="btn">Criar</button>
@@ -109,8 +150,10 @@ async function openNewModal() {
       scheduledStart: Timestamp.fromDate(new Date(document.getElementById('aStart').value)),
       scheduledEnd: document.getElementById('aEnd').value ? Timestamp.fromDate(new Date(document.getElementById('aEnd').value)) : null
     };
+    const conflict = await hasScheduleConflict({ customerId: data.customerId, vehicleId: data.vehicleId, start: data.scheduledStart.toDate(), end: data.scheduledEnd?.toDate() });
+    if (conflict) { showToast('Conflito de agenda'); return; }
     const id = await addOrder(data);
-    window.dispatchEvent(new Event('orders-changed'));
+    window.dispatchEvent(new Event('orders:changed'));
     closeModal();
     renderAgendaView();
     location.hash = `#orders/${id}`;
@@ -121,4 +164,14 @@ function closeModal(){ modalPlaceholder.innerHTML=''; }
 
 const esc  = (s='') => s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const attr = (s='') => esc(s).replace(/"/g,'&quot;');
+
+function showToast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 4000);
+}
+
+function toLocal(d){ if(!d) return ''; const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; }
 

@@ -9,6 +9,20 @@ import { renderUsersView } from './views/usersView.js';
 import { auth } from './firebase-config.js';
 
 const appContainer = document.getElementById('app-container');
+const netStatus = document.getElementById('net-status');
+
+function updateNetStatus() {
+  if (!netStatus) return;
+  netStatus.hidden = navigator.onLine;
+}
+
+window.addEventListener('online', updateNetStatus);
+window.addEventListener('offline', updateNetStatus);
+updateNetStatus();
+
+window.addEventListener('orders:changed', () => {
+  if (location.hash.startsWith('#agenda')) renderAgendaView();
+});
 
 const routes = {
   '#dashboard': renderDashboardView,
