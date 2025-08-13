@@ -39,12 +39,14 @@ export const renderAgendaView = async () => {
         scheduledStart: Timestamp.fromDate(info.event.start),
         scheduledEnd: info.event.end ? Timestamp.fromDate(info.event.end) : null
       });
+      window.dispatchEvent(new Event('orders-changed'));
     },
     eventResize: async info => {
       await updateOrder(info.event.id, {
         scheduledStart: Timestamp.fromDate(info.event.start),
         scheduledEnd: info.event.end ? Timestamp.fromDate(info.event.end) : null
       });
+      window.dispatchEvent(new Event('orders-changed'));
     }
   });
   calendar.render();
@@ -108,6 +110,7 @@ async function openNewModal() {
       scheduledEnd: document.getElementById('aEnd').value ? Timestamp.fromDate(new Date(document.getElementById('aEnd').value)) : null
     };
     const id = await addOrder(data);
+    window.dispatchEvent(new Event('orders-changed'));
     closeModal();
     renderAgendaView();
     location.hash = `#orders/${id}`;

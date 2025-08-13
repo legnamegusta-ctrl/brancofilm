@@ -2,24 +2,10 @@ import { renderClientesView } from './views/clientesView.js';
 import { renderServicosView } from './views/servicosView.js';
 import { renderAgendaView } from './views/agendaView.js';
 import { renderOrdersView } from './views/ordersView.js';
+import { renderDashboardView } from './views/dashboardView.js';
 import { auth } from './firebase-config.js';
 
 const appContainer = document.getElementById('app-container');
-
-function renderDashboardView() {
-  appContainer.innerHTML = `
-    <section class="card">
-      <h2>Dashboard</h2>
-      <p class="muted">Indicadores aparecerão aqui.</p>
-      <div class="grid-2">
-        <div class="tile">Clientes</div>
-        <div class="tile">Serviços</div>
-        <div class="tile">Agenda</div>
-        <div class="tile">Relatórios (futuro)</div>
-      </div>
-    </section>
-  `;
-}
 
 const routes = {
   '#dashboard': renderDashboardView,
@@ -62,4 +48,3 @@ export function navigate() {
     renderDashboardView();
   }
 }
-

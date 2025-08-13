@@ -5,7 +5,8 @@ import {
   getDocs, getDoc, addDoc,
   doc, updateDoc, deleteDoc,
   orderBy, serverTimestamp,
-  startAfter, limit as limitFn
+  startAfter, limit as limitFn,
+  Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // --- Coleções ---
@@ -140,4 +141,53 @@ export function updateOrder(id, data) {
 }
 export function deleteOrder(id) {
   return deleteDoc(doc(ordersCollection, id));
+}
+
+// --- Utilitários para dashboard ---
+export async function countCustomers() {
+  const snap = await getDocs(customersCollection);
+  return snap.size;
+}
+
+export async function countVehicles() {
+  const snap = await getDocs(vehiclesCollection);
+  return snap.size;
+}
+
+export async function countServices() {
+  const snap = await getDocs(servicosCollection);
+  return snap.size;
+}
+
+export async function countOrders(opts = {}) {
+  const { status, from, to } = opts;
+  let q = ordersCollection;
+  if (status) q = query(q, where('status', '==', status));
+  if (from) q = query(q, where('scheduledStart', '>=', from));
+  if (to) q = query(q, where('scheduledStart', '<=', to));
+  if (from || to) q = query(q, orderBy('scheduledStart', 'asc'));
+  const snap = await getDocs(q);
+  return snap.size;
+}
+
+export async function sumOrdersTotal(opts = {}) {
+  const { status = 'concluido', from, to } = opts;
+  let q = ordersCollection;
+  if (status) q = query(q, where('status', '==', status));
+  if (from) q = query(q, where('updatedAt', '>=', from));
+  if (to) q = query(q, where('updatedAt', '<=', to));
+  const snap = await getDocs(q);
+  return snap.docs.reduce((s, d) => s + (Number(d.data().total) || 0), 0);
+}
+
+export async function getNextSchedules(limit = 5) {
+  const now = Timestamp.now();
+  const q = query(
+    ordersCollection,
+    where('scheduledStart', '>=', now),
+    orderBy('scheduledStart', 'asc'),
+    limitFn(limit)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
