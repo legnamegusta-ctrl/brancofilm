@@ -2,7 +2,7 @@ import { t } from '../i18n.js';
 import { getClientErrors, cleanOldClientErrors } from '../services/firestoreService.js';
 
 export async function renderDevLogsView() {
-  const container = document.getElementById('app-container');
+  const container = document.getElementById('page-content');
   container.innerHTML = `<h2>${t('logs.title')}</h2><div id="logs-list" class="mt"></div><button id="btn-clean" class="btn btn-secondary mt">${t('logs.clear')}</button>`;
 
   const listEl = container.querySelector('#logs-list');

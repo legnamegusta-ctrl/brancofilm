@@ -2,7 +2,7 @@ import { t } from '../i18n.js';
 import { getGoals, setGoals } from '../services/firestoreService.js';
 
 export async function renderGoalsView() {
-  const container = document.getElementById('app-container');
+  const container = document.getElementById('page-content');
   const now = new Date();
   const monthKey = now.toISOString().slice(0, 7); // YYYY-MM
   const goals = await getGoals(monthKey).catch(() => ({}));

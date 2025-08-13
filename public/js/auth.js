@@ -35,10 +35,11 @@ const signupForm = document.getElementById('signup-form');
 const resetForm = document.getElementById('reset-form');
 const showPassBtns = document.querySelectorAll('.show-pass-btn');
 
-const header = document.querySelector('header');
-const nav = document.getElementById('main-nav');
+const topbar = document.getElementById('topbar');
+const sidebar = document.getElementById('sidebar');
+const bottomNav = document.getElementById('bottom-nav');
 const whoami = document.getElementById('whoami');
-const appContainer = document.getElementById('app-container');
+const appContainer = document.getElementById('page-content');
 const btnSignOut = document.getElementById('btnSignOut');
 const unitSwitcher = document.getElementById('unit-switcher');
 
@@ -211,7 +212,9 @@ onAuthStateChanged(auth, async (user) => {
       setServiceUnit(null);
     }
     whoami.textContent = user.email;
-    nav.style.display = '';
+    sidebar.style.display = '';
+    topbar.style.display = '';
+    bottomNav.style.display = '';
     authShell.style.display = 'none';
     if (location.hash === '#login' || !location.hash) {
       location.hash = '#dashboard';
@@ -225,7 +228,9 @@ onAuthStateChanged(auth, async (user) => {
     unitSwitcher && (unitSwitcher.style.display = 'none');
     setServiceUnit(null);
     whoami.textContent = '';
-    nav.style.display = 'none';
+    sidebar.style.display = 'none';
+    topbar.style.display = 'none';
+    bottomNav.style.display = 'none';
     authShell.style.display = '';
     appContainer.innerHTML = '';
     if (location.hash !== '#login') {

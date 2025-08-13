@@ -10,7 +10,7 @@ import {
   deleteVehicle
 } from '../services/firestoreService.js';
 
-const appContainer = document.getElementById('app-container');
+const appContainer = document.getElementById('page-content');
 const PAGE_SIZE = 6;
 let customers = [];
 let lastId = null;

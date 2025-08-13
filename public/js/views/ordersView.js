@@ -10,7 +10,7 @@ import { listOrderPhotos, uploadOrderPhotos, deleteOrderPhoto } from '../storage
 import { db, auth } from '../firebase-config.js';
 import { Timestamp, collection as coll, addDoc, getDocs, query, where, orderBy, limit as limitFn } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const appContainer = document.getElementById('app-container');
+const appContainer = document.getElementById('page-content');
 const modalPlaceholder = document.getElementById('modal-placeholder');
 
 export const renderOrdersView = async (param) => {
@@ -32,10 +32,12 @@ async function renderOrdersList() {
     }
     o.customerName = customerCache[o.customerId];
   }
-  appContainer.innerHTML = `
-    <section class="card">
-      <h2>Ordens de Serviço</h2>
-      <div class="grid mt">
+  window.setPageHeader({
+    title: 'Ordens',
+    breadcrumbs: ['Operação', 'Ordens'],
+    actions: [{ id: 'btnNewOrder', label: 'Nova OS' }],
+    filters: `
+      <div class="grid">
         <select id="filter-status">
           <option value="">Todos</option>
           <option value="novo">Novo</option>
@@ -46,8 +48,10 @@ async function renderOrdersList() {
         <input type="date" id="filter-from" />
         <input type="date" id="filter-to" />
         <button class="btn" id="applyFilters">Filtrar</button>
-        <button class="btn" id="btnNewOrder">Nova OS</button>
-      </div>
+      </div>`
+  });
+  appContainer.innerHTML = `
+    <section class="card">
       <table class="mt simple-table">
         <thead><tr><th>Cliente</th><th>Status</th><th>Total</th><th>Agendado</th><th>Criado</th><th></th></tr></thead>
         <tbody id="orders-body"></tbody>

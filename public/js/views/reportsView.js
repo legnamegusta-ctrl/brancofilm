@@ -2,7 +2,7 @@ import { Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-f
 import { getOrdersFinished, countOrdersByStatus, getCycleDurations } from '../services/firestoreService.js';
 
 export async function renderReportsView() {
-  const container = document.getElementById('app-container');
+  const container = document.getElementById('page-content');
   container.innerHTML = `
     <h2>Relatórios</h2>
     <div class="tabs">

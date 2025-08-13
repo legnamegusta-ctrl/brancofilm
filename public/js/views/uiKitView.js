@@ -1,4 +1,4 @@
-const appContainer = document.getElementById('app-container');
+const appContainer = document.getElementById('page-content');
 
 export function renderUiKitView() {
   appContainer.innerHTML = `

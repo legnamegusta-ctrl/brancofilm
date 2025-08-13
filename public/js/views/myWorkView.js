@@ -2,7 +2,7 @@
 import { getOrdersAssignedTo, updateOrder } from '../services/firestoreService.js';
 import { auth } from '../firebase-config.js';
 
-const appContainer = document.getElementById('app-container');
+const appContainer = document.getElementById('page-content');
 
 export async function renderMyWorkView() {
   const uid = auth.currentUser?.uid;

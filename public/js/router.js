@@ -17,8 +17,32 @@ import { renderDevLogsView } from './views/devLogsView.js';
 import { renderUiKitView } from './views/uiKitView.js';
 import { auth } from './firebase-config.js';
 
-const appContainer = document.getElementById('app-container');
+const appContainer = document.getElementById('page-content');
+const pageHeader = document.getElementById('page-header');
 const netStatus = document.getElementById('net-status');
+const sidebarLinks = document.querySelectorAll('#sidebar a[data-route],#bottom-nav a[data-route]');
+const globalSearch = document.getElementById('global-search');
+
+window.setPageHeader = ({ title = '', breadcrumbs = [], actions = [], filters = '' }) => {
+  const crumbs = breadcrumbs.length ? `<nav class="breadcrumbs">${breadcrumbs.join(' / ')}</nav>` : '';
+  const acts = actions.map(a => `<button class="btn" id="${a.id}">${a.label}</button>`).join('');
+  pageHeader.innerHTML = `
+    ${crumbs}
+    <div class="header-main">
+      <h1>${title}</h1>
+      <div class="actions">${acts}</div>
+    </div>
+    <div class="filters">${filters}</div>
+  `;
+  pageHeader.style.display = '';
+};
+
+globalSearch?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const term = globalSearch.value.trim();
+    if (term) window.dispatchEvent(new CustomEvent('global-search', { detail: term }));
+  }
+});
 
 function updateNetStatus() {
   if (!netStatus) return;
@@ -59,6 +83,8 @@ const routes = {
 
 export function navigate() {
   const hash = location.hash || '#dashboard';
+  pageHeader.style.display = 'none';
+  pageHeader.innerHTML = '';
 
   if (!auth.currentUser && hash !== '#login' && !hash.startsWith('#q/')) {
     location.hash = '#login';
@@ -72,6 +98,7 @@ export function navigate() {
 
   if (hash === '#login') {
     appContainer.innerHTML = '';
+    pageHeader.style.display = 'none';
     return;
   }
 
@@ -85,10 +112,11 @@ export function navigate() {
     return;
   }
 
-  const navLinks = document.querySelectorAll('#main-nav a');
-  navLinks.forEach(link => link.classList.remove('active'));
-  const activeLink = document.querySelector(`#main-nav a[href^="${mainPath}"]`);
-  if (activeLink) activeLink.classList.add('active');
+  sidebarLinks.forEach(link => link.classList.remove('active'));
+  const activeLink = document.querySelector(`#sidebar a[data-route="${mainPath}"]`);
+  const activeBottom = document.querySelector(`#bottom-nav a[data-route="${mainPath}"]`);
+  activeLink?.classList.add('active');
+  activeBottom?.classList.add('active');
 
   const fn = routes[mainPath];
   if (typeof fn === 'function') {

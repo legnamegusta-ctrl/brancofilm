@@ -2,7 +2,7 @@ import { exportCollections, importCollections } from '../services/firestoreServi
 import { t } from '../i18n.js';
 
 export function renderSettingsView() {
-  const container = document.getElementById('app-container');
+  const container = document.getElementById('page-content');
   container.innerHTML = `
     <h2>Configurações</h2>
     <nav class="tabs mt">
