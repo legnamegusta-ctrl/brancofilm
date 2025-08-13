@@ -45,7 +45,8 @@ export function navigate() {
     return;
   }
 
-  const [mainPath, param] = hash.split('/');
+  const [mainPath, ...rest] = hash.split('/');
+  const param = rest.join('/') || null;
 
   const navLinks = document.querySelectorAll('#main-nav a');
   navLinks.forEach(link => link.classList.remove('active'));
@@ -54,7 +55,7 @@ export function navigate() {
 
   const fn = routes[mainPath];
   if (typeof fn === 'function') {
-    fn(param || null);
+    fn(param);
   } else {
     renderDashboardView();
   }
