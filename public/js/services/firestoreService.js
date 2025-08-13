@@ -211,7 +211,7 @@ export async function getOrdersFinished({ from, to } = {}) {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-export async function getOrdersByStatus({ from, to } = {}) {
+export async function countOrdersByStatus({ from, to } = {}) {
   let q = ordersCollection;
   if (from) q = query(q, where('createdAt', '>=', from));
   if (to)   q = query(q, where('createdAt', '<=', to));

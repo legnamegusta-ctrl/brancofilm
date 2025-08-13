@@ -1,5 +1,5 @@
 import { Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getOrdersFinished, getOrdersByStatus, getCycleDurations } from '../services/firestoreService.js';
+import { getOrdersFinished, countOrdersByStatus, getCycleDurations } from '../services/firestoreService.js';
 
 export async function renderReportsView() {
   const container = document.getElementById('app-container');
@@ -60,7 +60,7 @@ async function loadOperacional() {
   area.innerHTML = '<p class="skeleton">Carregando...</p>';
   const to = Timestamp.now();
   const from = Timestamp.fromDate(new Date(Date.now() - 7*86400000));
-  const status = await getOrdersByStatus({ from, to });
+  const status = await countOrdersByStatus({ from, to });
   const cycle = await getCycleDurations({ from, to });
   let html = '<div class="grid">';
   Object.entries(status).forEach(([st,q])=>{
