@@ -2,6 +2,7 @@
 import { renderClientesView } from './views/clientesView.js';
 import { renderServicosView } from './views/servicosView.js';
 import { renderAgendaView } from './views/agendaView.js';
+import { auth } from './firebase-config.js';
 
 const appContainer = document.getElementById('app-container');
 
@@ -29,6 +30,21 @@ const routes = {
 
 export const navigate = () => {
   const hash = location.hash || '#dashboard';
+
+  if (!auth.currentUser && hash !== '#login') {
+    location.hash = '#login';
+    return;
+  }
+  if (auth.currentUser && hash === '#login') {
+    location.hash = '#dashboard';
+    return;
+  }
+
+  if (hash === '#login') {
+    appContainer.innerHTML = '';
+    return;
+  }
+
   const [mainPath, param] = hash.split('/');
 
   // link ativo
