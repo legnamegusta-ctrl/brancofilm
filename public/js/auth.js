@@ -1,6 +1,7 @@
 import { auth } from './firebase-config.js';
 import { navigate } from './router.js';
-import { ensureUserDocOnLogin } from './services/firestoreService.js';
+import { ensureUserDocOnLogin, enableOfflinePersistence } from './services/firestoreService.js';
+import { requestPermissionAndToken } from './messaging.js';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -8,6 +9,8 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+enableOfflinePersistence().catch(()=>{});
 
 export function signIn(email, pass) {
   return signInWithEmailAndPassword(auth, email, pass);
@@ -189,6 +192,7 @@ onAuthStateChanged(auth, async (user) => {
     if (location.hash === '#login' || !location.hash) {
       location.hash = '#dashboard';
     }
+    await requestPermissionAndToken();
     navigate();
   } else {
     window.sessionState = {};

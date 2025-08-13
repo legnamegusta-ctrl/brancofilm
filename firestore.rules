@@ -9,6 +9,14 @@ service cloud.firestore {
       allow read: if signedIn() && (uid == request.auth.uid || isAdmin());
       allow write: if isAdmin();
     }
+    match /auditLogs/{id} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+    match /orders/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
     match /{document=**} {
       allow read, write: if signedIn();
     }
@@ -16,8 +24,9 @@ service cloud.firestore {
 }
 
 // índices necessários:
-// orders(createdAt desc)
-// orders(status asc, createdAt desc)
 // orders(scheduledStart asc)
+// orders(status asc, createdAt desc)
+// orders(customerId asc, scheduledStart asc)
+// orders(vehicleId asc, scheduledStart asc)
+// users(role asc)
 // services(createdAt desc)
-// users(createdAt desc)

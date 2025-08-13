@@ -6,7 +6,8 @@ service firebase.storage {
       return get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     match /{allPaths=**} {
-      allow read, write: if signedIn();
+      allow read: if signedIn();
+      allow create, update: if signedIn();
       allow delete: if signedIn() && (isAdmin() || request.auth.uid == resource.metadata.uploadedBy);
     }
   }

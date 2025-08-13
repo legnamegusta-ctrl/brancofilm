@@ -6,7 +6,8 @@ import {
   doc, updateDoc, deleteDoc,
   orderBy, serverTimestamp,
   startAfter, limit as limitFn,
-  Timestamp, setDoc, writeBatch
+  Timestamp, setDoc, writeBatch,
+  arrayUnion, enableIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // --- Coleções ---
@@ -62,6 +63,10 @@ export async function getVehiclesForCustomer(customerId) {
   const q = query(vehiclesCollection, where('customerId','==', customerId));
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+export async function getVehicleById(id) {
+  const dref = await getDoc(doc(vehiclesCollection, id));
+  return dref.exists() ? { id: dref.id, ...dref.data() } : null;
 }
 export async function addVehicle(data) {
   const res = await addDoc(vehiclesCollection, { ...data, createdAt: serverTimestamp() });
@@ -307,4 +312,54 @@ export async function importCollections(json, opts = { mode: 'merge', collection
       if (progressCb) progressCb(Math.min(i / docs.length, 1));
     }
   }
+}
+
+// --- FCM e Agenda helpers ---
+export async function listAdminTokens() {
+  const snap = await getDocs(query(usersCollection, where('role', '==', 'admin')));
+  const tokens = [];
+  snap.docs.forEach(d => {
+    const arr = d.data().fcmTokens || [];
+    arr.forEach(t => tokens.push(t));
+  });
+  return tokens;
+}
+
+export async function saveUserFcmToken(uid, token) {
+  if (!uid || !token) return;
+  await updateDoc(doc(usersCollection, uid), { fcmTokens: arrayUnion(token) });
+}
+
+export async function ordersInNext(hours = 24) {
+  const now = Timestamp.now();
+  const end = Timestamp.fromDate(new Date(Date.now() + hours * 60 * 60 * 1000));
+  const q = query(
+    ordersCollection,
+    where('scheduledStart', '>=', now),
+    where('scheduledStart', '<=', end)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+export async function hasScheduleConflict({ customerId, vehicleId, start, end, excludeOrderId } = {}) {
+  let q = ordersCollection;
+  if (customerId) q = query(q, where('customerId', '==', customerId));
+  if (vehicleId) q = query(q, where('vehicleId', '==', vehicleId));
+  if (end) q = query(q, where('scheduledStart', '<', end));
+  const snap = await getDocs(q);
+  const s = start instanceof Date ? start : start.toDate();
+  const e = end ? (end instanceof Date ? end : end.toDate()) : s;
+  return snap.docs.some(d => {
+    if (excludeOrderId && d.id === excludeOrderId) return false;
+    const data = d.data();
+    const st = data.scheduledStart?.toDate();
+    const en = data.scheduledEnd ? data.scheduledEnd.toDate() : null;
+    const endComp = en || new Date(st.getTime() + 1);
+    return s < endComp && e > st;
+  });
+}
+
+export function enableOfflinePersistence() {
+  return enableIndexedDbPersistence(db);
 }
