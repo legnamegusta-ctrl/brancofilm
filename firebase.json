@@ -1,0 +1,7 @@
+{
+  "hosting": {
+    "site": "brancofilmcv",
+    "public": "brancofilm",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
+  }
+}

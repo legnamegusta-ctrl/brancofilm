@@ -1,0 +1,261 @@
+/* --- RESET E ESTILOS GLOBAIS --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+body {
+    background-color: #f0f2f5; /* Um cinza claro para o fundo */
+    color: #1c1e21; /* Cor de texto principal */
+}
+
+/* --- CABEÇALHO E NAVEGAÇÃO --- */
+header {
+    background-color: #ffffff;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+header h1 {
+    font-size: 1.5rem;
+    color: #0056b3; /* Um tom de azul */
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+nav {
+    display: flex;
+    justify-content: space-around; /* Espaçamento igual entre os links */
+    align-items: center;
+}
+
+nav a {
+    text-decoration: none;
+    color: #333;
+    font-weight: 600;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+nav a:hover, nav a.active {
+    background-color: #e7f3ff;
+    color: #0056b3;
+}
+
+/* --- CONTAINER PRINCIPAL --- */
+main#app-container {
+    padding: 1.5rem;
+}
+
+/* --- COMPONENTES REUTILIZÁVEIS --- */
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.3s, transform 0.1s;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+
+/* --- ESTILOS PARA CARDS (SERVIÇOS, CLIENTES, ETC) --- */
+.card-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.card {
+    background-color: #ffffff;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.card-header {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.card-body {
+    color: #555;
+}
+
+.card-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+
+/* --- ESTILOS PARA O MODAL --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Fundo escuro semi-transparente */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    transform: scale(0.9);
+    transition: transform 0.3s;
+}
+
+.modal-overlay.active .modal-content {
+    transform: scale(1);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 1rem;
+}
+
+.modal-header h2 {
+    font-size: 1.5rem;
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #888;
+}
+
+/* --- ESTILOS PARA FORMULÁRIOS DENTRO DO MODAL --- */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+
+/* --- MEDIA QUERIES PARA DESKTOP (Mobile-First) --- */
+@media (min-width: 768px) {
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    header h1 {
+        margin-bottom: 0;
+    }
+    
+    nav {
+        justify-content: flex-end;
+        gap: 1rem;
+    }
+
+    .card-list {
+        grid-template-columns: repeat(2, 1fr); /* 2 colunas em telas maiores */
+    }
+}
+
+@media (min-width: 1024px) {
+    .card-list {
+        grid-template-columns: repeat(3, 1fr); /* 3 colunas em telas muito grandes */
+    }
+}
+#calendar-container {
+    background-color: #ffffff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Altera a cor do cabeçalho do calendário (Dom, Seg, Ter...) */
+.fc .fc-col-header-cell-cushion { 
+    color: #0056b3;
+    text-decoration: none;
+}
+
+/* Cor dos botões (Hoje, Mês, Semana, Dia) */
+.fc .fc-button-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.fc .fc-button-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+/* Cor do evento no calendário */
+.fc-event {
+    cursor: pointer;
+}
