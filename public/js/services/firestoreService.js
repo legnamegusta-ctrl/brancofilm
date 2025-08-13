@@ -4,7 +4,8 @@ import {
   collection, query, where,
   getDocs, getDoc, addDoc,
   doc, updateDoc, deleteDoc,
-  orderBy, serverTimestamp
+  orderBy, serverTimestamp,
+  startAfter, limit as limitFn
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // --- Coleções ---
@@ -14,20 +15,42 @@ const servicosCollection  = collection(db, 'servicos');
 const serviceOrdersCollection = collection(db, 'serviceOrders');
 
 // --- Clientes ---
-export async function getCustomers() {
-  const snap = await getDocs(query(customersCollection, orderBy('createdAt','desc'))).catch(async () => await getDocs(customersCollection));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+export async function getCustomers(opts = {}) {
+  const { order = 'desc', limit: limitCount, startAfterId } = opts;
+
+  let q = query(customersCollection, orderBy('createdAt', order));
+
+  if (startAfterId) {
+    const startDoc = await getDoc(doc(customersCollection, startAfterId));
+    if (startDoc.exists()) q = query(q, startAfter(startDoc));
+  }
+
+  if (limitCount) {
+    q = query(q, limitFn(limitCount));
+  }
+
+  const snap = await getDocs(q).catch(async () => await getDocs(customersCollection));
+
+  const arr = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  arr.lastId = snap.docs.length ? snap.docs[snap.docs.length - 1].id : null;
+  return arr;
 }
 export async function getCustomerById(id) {
   const dref = await getDoc(doc(db, 'customers', id));
   return dref.exists() ? { id: dref.id, ...dref.data() } : null;
 }
 export async function addCustomer(data) {
-  const res = await addDoc(customersCollection, { ...data, createdAt: serverTimestamp() });
+  const res = await addDoc(customersCollection, {
+    ...data,
+    createdAt: serverTimestamp()
+  });
   return res.id;
 }
 export function updateCustomer(id, data) {
-  return updateDoc(doc(db, 'customers', id), data);
+  return updateDoc(doc(db, 'customers', id), {
+    ...data,
+    updatedAt: serverTimestamp()
+  });
 }
 export function deleteCustomer(id) {
   return deleteDoc(doc(db, 'customers', id));
