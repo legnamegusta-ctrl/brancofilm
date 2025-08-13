@@ -8,21 +8,41 @@
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
 </head>
 <body>
-    <header>
+    <header style="display:none;">
         <h1>Minha Estética</h1>
         <nav id="main-nav">
             <a href="#dashboard">Dashboard</a>
             <a href="#agenda">Agenda</a>
             <a href="#clientes">Clientes</a>
             <a href="#servicos">Serviços</a>
+            <span id="whoami" class="muted"></span>
+            <button id="btnSignOut" class="link">Sair</button>
         </nav>
     </header>
 
-    <main id="app-container">
-        </main>
+    <section id="login-view" class="card" style="display:none;max-width:360px;margin:40px auto;">
+        <h2>Entrar</h2>
+        <form id="login-form" class="grid mt">
+            <label>Email <input id="login-email" type="email" required /></label>
+            <label>Senha <input id="login-pass" type="password" required /></label>
+            <button class="btn btn-primary">Entrar</button>
+        </form>
+        <details class="mt">
+            <summary>Criar conta</summary>
+            <form id="signup-form" class="grid mt">
+                <label>Email <input id="signup-email" type="email" required /></label>
+                <label>Senha <input id="signup-pass" type="password" required /></label>
+                <button class="btn">Criar</button>
+            </form>
+        </details>
+        <p class="mt"><a href="#" id="reset-link">Esqueci a senha</a></p>
+    </section>
+
+    <main id="app-container"></main>
 
     <div id="modal-placeholder"></div>
 
+    <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/main.js"></script>
 </body>
 </html>
