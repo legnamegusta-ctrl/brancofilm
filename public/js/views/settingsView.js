@@ -1,9 +1,14 @@
 import { exportCollections, importCollections } from '../services/firestoreService.js';
+import { t } from '../i18n.js';
 
 export function renderSettingsView() {
   const container = document.getElementById('app-container');
   container.innerHTML = `
     <h2>Configurações</h2>
+    <nav class="tabs mt">
+      <a href="#config" class="tab-btn" aria-selected="true">${t('settings.general')}</a>
+      <a href="#config/goals" class="tab-btn">${t('navbar.goals')}</a>
+    </nav>
     <section class="mt">
       <h3>Backup</h3>
       <button id="btn-backup" class="btn btn-primary">Exportar JSON</button>

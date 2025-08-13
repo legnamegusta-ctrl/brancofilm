@@ -5,8 +5,25 @@ service cloud.firestore {
     function isAdmin() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
+    function appSettings() { return get(/databases/$(database)/documents/settings/app).data; }
+    function inUnit(doc) {
+      return !appSettings().multiUnit || isAdmin() || doc.data.unitId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.unitId;
+    }
     match /users/{uid} {
       allow read: if signedIn() && (uid == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
+    }
+    match /clientErrors/{id} {
+      allow create: if signedIn();
+      allow read: if isAdmin();
+      allow delete: if false;
+    }
+    match /settings/goals/{month} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+    match /units/{id} {
+      allow read: if signedIn();
       allow write: if isAdmin();
     }
     match /auditLogs/{id} {
@@ -14,7 +31,7 @@ service cloud.firestore {
       allow write: if false;
     }
     match /orders/{id} {
-      allow read: if signedIn();
+      allow read: if signedIn() && inUnit(resource);
       allow write: if isAdmin();
     }
     match /quotes_public/{token} {
@@ -22,7 +39,7 @@ service cloud.firestore {
       allow write: if false;
     }
     match /{document=**} {
-      allow read, write: if signedIn();
+      allow read, write: if signedIn() && inUnit(resource);
     }
   }
 }
@@ -38,3 +55,5 @@ service cloud.firestore {
 // quotes_public(token asc)
 // users(role asc)
 // services(createdAt desc)
+// clientErrors(route asc, ts desc)
+// orders(unitId asc, status asc)

@@ -10,6 +10,10 @@ import { renderKanbanView } from './views/kanbanView.js';
 import { renderMyWorkView } from './views/myWorkView.js';
 import { renderQuotesView } from './views/quotesView.js';
 import { renderQuotePublicView } from './views/quotePublicView.js';
+import { renderReportsAdvancedView } from './views/reportsAdvancedView.js';
+import { renderGoalsView } from './views/goalsView.js';
+import { renderUnitsView } from './views/unitsView.js';
+import { renderDevLogsView } from './views/devLogsView.js';
 import { auth } from './firebase-config.js';
 
 const appContainer = document.getElementById('app-container');
@@ -38,8 +42,16 @@ const routes = {
   '#my-work': renderMyWorkView,
   '#orcamentos': renderQuotesView,
   '#relatorios': renderReportsView,
-  '#config': renderSettingsView,
+  '#relatorios-avancados': renderReportsAdvancedView,
+  '#config': (param) => {
+    if (param === 'goals') return renderGoalsView();
+    return renderSettingsView();
+  },
   '#usuarios': renderUsersView,
+  '#unidades': renderUnitsView,
+  '#dev': (param) => {
+    if (param === 'logs') renderDevLogsView();
+  },
   '#q': renderQuotePublicView,
 };
 
@@ -64,7 +76,7 @@ export function navigate() {
   const [mainPath, ...rest] = hash.split('/');
   const param = rest.join('/') || null;
 
-  const adminRoutes = ['#usuarios', '#config'];
+  const adminRoutes = ['#usuarios', '#config', '#dev', '#unidades'];
   const role = window.sessionState?.role;
   if (adminRoutes.includes(mainPath) && role !== 'admin') {
     location.hash = '#dashboard';

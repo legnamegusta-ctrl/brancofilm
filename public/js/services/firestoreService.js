@@ -19,12 +19,23 @@ const vehiclesCollection  = collection(db, 'vehicles');
 const servicosCollection  = collection(db, 'services');
 const ordersCollection    = collection(db, 'orders');
 const quotesCollection    = collection(db, 'quotes');
+const unitsCollection     = collection(db, 'units');
+const clientErrorsCollection = collection(db, 'clientErrors');
+
+const appSettingsDoc = doc(db, 'settings', 'app');
+
+const memCache = {};
+let currentUnitId = null;
+export function setServiceUnit(id) { currentUnitId = id; }
 
 // --- Clientes ---
 export async function getCustomers(opts = {}) {
-  const { order = 'desc', limit: limitCount, startAfterId } = opts;
+  const { order = 'desc', limit: limitCount, startAfterId, unitId } = opts;
+  const cacheKey = `customers_${unitId || 'all'}_${order}_${limitCount || 0}_${startAfterId || 'start'}`;
+  if (memCache[cacheKey]) return memCache[cacheKey];
 
   let q = query(customersCollection, orderBy('createdAt', order));
+  if (unitId) q = query(q, where('unitId', '==', unitId));
 
   if (startAfterId) {
     const startDoc = await getDoc(doc(customersCollection, startAfterId));
@@ -39,6 +50,8 @@ export async function getCustomers(opts = {}) {
 
   const arr = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   arr.lastId = snap.docs.length ? snap.docs[snap.docs.length - 1].id : null;
+  const cacheKey = `customers_${unitId || 'all'}_${order}_${limitCount || 0}_${startAfterId || 'start'}`;
+  memCache[cacheKey] = arr;
   return arr;
 }
 export async function getCustomerById(id) {
@@ -48,6 +61,7 @@ export async function getCustomerById(id) {
 export async function addCustomer(data) {
   const res = await addDoc(customersCollection, {
     ...data,
+    unitId: data.unitId || currentUnitId || null,
     createdAt: serverTimestamp()
   });
   return res.id;
@@ -73,7 +87,7 @@ export async function getVehicleById(id) {
   return dref.exists() ? { id: dref.id, ...dref.data() } : null;
 }
 export async function addVehicle(data) {
-  const res = await addDoc(vehiclesCollection, { ...data, createdAt: serverTimestamp() });
+  const res = await addDoc(vehiclesCollection, { ...data, unitId: data.unitId || currentUnitId || null, createdAt: serverTimestamp() });
   return res.id;
 }
 export function deleteVehicle(id) {
@@ -81,8 +95,10 @@ export function deleteVehicle(id) {
 }
 
 // --- Serviços ---
-export async function getServicos() {
-  const q = query(servicosCollection, orderBy('createdAt', 'desc'));
+export async function getServicos(opts = {}) {
+  const { unitId } = opts;
+  let q = query(servicosCollection, orderBy('createdAt', 'desc'));
+  if (unitId) q = query(q, where('unitId', '==', unitId));
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
@@ -90,6 +106,7 @@ export function addServico({ name, price }) {
   return addDoc(servicosCollection, {
     name,
     price: Number(price) || 0,
+    unitId: currentUnitId || null,
     createdAt: serverTimestamp()
   });
 }
@@ -106,12 +123,15 @@ export function deleteServico(id) {
 
 // --- Ordens de Serviço ---
 export async function getOrders(opts = {}) {
-  const { status, from, to, limit: limitCount, startAfterId } = opts;
+  const { status, from, to, limit: limitCount, startAfterId, unitId } = opts;
+  const cacheKey = `orders_${unitId || 'all'}_${status || 'all'}_${from || '0'}_${to || '0'}_${limitCount || 0}_${startAfterId || 'start'}`;
+  if (memCache[cacheKey]) return memCache[cacheKey];
   let q = ordersCollection;
 
   if (status) q = query(q, where('status', '==', status));
   if (from)   q = query(q, where('scheduledStart', '>=', from));
   if (to)     q = query(q, where('scheduledStart', '<=', to));
+  if (unitId) q = query(q, where('unitId', '==', unitId));
 
   if (from || to) {
     q = query(q, orderBy('scheduledStart', 'asc'));
@@ -128,6 +148,7 @@ export async function getOrders(opts = {}) {
   const snap = await getDocs(q);
   const arr = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   arr.lastId = snap.docs.length ? snap.docs[snap.docs.length - 1].id : null;
+  memCache[cacheKey] = arr;
   return arr;
 }
 export async function getOrderById(id) {
@@ -137,6 +158,7 @@ export async function getOrderById(id) {
 export async function addOrder(data) {
   const res = await addDoc(ordersCollection, {
     ...data,
+    unitId: data.unitId || currentUnitId || null,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -521,3 +543,160 @@ export async function convertQuoteToOrder(quoteId) {
   });
   return res.id;
 }
+
+// --- Advanced Reports ---
+export async function revenueByService({ from, to, unitId } = {}) {
+  let q = query(ordersCollection, where('status', '==', 'concluido'));
+  if (from) q = query(q, where('closedAt', '>=', from));
+  if (to) q = query(q, where('closedAt', '<=', to));
+  if (unitId) q = query(q, where('unitId', '==', unitId));
+  const snap = await getDocs(q);
+  const map = {};
+  snap.docs.forEach(d => {
+    const data = d.data();
+    (data.items || []).forEach(it => {
+      const id = it.serviceId || it.id;
+      const val = Number(it.price || 0);
+      map[id] = (map[id] || 0) + val;
+    });
+  });
+  return Object.entries(map).map(([serviceId, total]) => ({ serviceId, total }));
+}
+
+export async function customersStats({ from, to, unitId } = {}) {
+  let q = ordersCollection;
+  if (from) q = query(q, where('createdAt', '>=', from));
+  if (to) q = query(q, where('createdAt', '<=', to));
+  if (unitId) q = query(q, where('unitId', '==', unitId));
+  const snap = await getDocs(q);
+  const seen = new Set();
+  const stats = { novos: 0, recorrentes: 0 };
+  snap.docs.forEach(d => {
+    const cId = d.data().customerId;
+    if (!cId) return;
+    if (seen.has(cId)) stats.recorrentes += 1; else { stats.novos += 1; seen.add(cId); }
+  });
+  return stats;
+}
+
+export async function conversionStats({ from, to, unitId } = {}) {
+  let qQuotes = quotesCollection;
+  if (from) qQuotes = query(qQuotes, where('createdAt', '>=', from));
+  if (to) qQuotes = query(qQuotes, where('createdAt', '<=', to));
+  const quotesSnap = await getDocs(qQuotes);
+
+  let qOrders = query(ordersCollection, where('status', '==', 'concluido'));
+  if (from) qOrders = query(qOrders, where('createdAt', '>=', from));
+  if (to) qOrders = query(qOrders, where('createdAt', '<=', to));
+  if (unitId) qOrders = query(qOrders, where('unitId', '==', unitId));
+  const ordersSnap = await getDocs(qOrders);
+
+  const totalQuotes = quotesSnap.size || 1;
+  const converted = ordersSnap.size;
+  return { totalQuotes, converted, rate: converted / totalQuotes };
+}
+
+export async function productivityStats({ from, to, unitId } = {}) {
+  let q = query(ordersCollection, where('status', '==', 'concluido'));
+  if (from) q = query(q, where('closedAt', '>=', from));
+  if (to) q = query(q, where('closedAt', '<=', to));
+  if (unitId) q = query(q, where('unitId', '==', unitId));
+  const snap = await getDocs(q);
+  const map = {};
+  snap.docs.forEach(d => {
+    const data = d.data();
+    const uid = data.assignedTo || 'unassigned';
+    const total = Number(data.total) || 0;
+    const start = data.createdAt?.toDate();
+    const end = data.closedAt?.toDate() || data.updatedAt?.toDate();
+    const cycle = start && end ? end.getTime() - start.getTime() : 0;
+    if (!map[uid]) map[uid] = { count: 0, total: 0, cycle: [] };
+    map[uid].count += 1;
+    map[uid].total += total;
+    map[uid].cycle.push(cycle);
+  });
+  return Object.entries(map).map(([uid, info]) => ({
+    uid,
+    orders: info.count,
+    total: info.total,
+    avgCycle: info.cycle.length ? info.cycle.reduce((a,b)=>a+b,0)/info.cycle.length : 0,
+  }));
+}
+
+export async function ordersHeatmap({ from, to, unitId } = {}) {
+  let q = ordersCollection;
+  if (from) q = query(q, where('createdAt', '>=', from));
+  if (to) q = query(q, where('createdAt', '<=', to));
+  if (unitId) q = query(q, where('unitId', '==', unitId));
+  const snap = await getDocs(q);
+  const heat = Array.from({ length: 7 }, () => Array(24).fill(0));
+  snap.docs.forEach(d => {
+    const date = d.data().createdAt?.toDate();
+    if (!date) return;
+    heat[date.getDay()][date.getHours()] += 1;
+  });
+  return heat;
+}
+
+// --- Goals ---
+export async function getGoals(monthKey) {
+  const ref = doc(db, 'settings/goals', monthKey);
+  const snap = await getDoc(ref);
+  return snap.exists() ? snap.data() : null;
+}
+
+export function setGoals(monthKey, data) {
+  const ref = doc(db, 'settings/goals', monthKey);
+  return setDoc(ref, data, { merge: true });
+}
+
+// --- Units helpers ---
+export async function getUnits() {
+  const snap = await getDocs(unitsCollection);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+export async function setDefaultUnitForAll(collections = [], unitId) {
+  for (const key of collections) {
+    const coll = collection(db, key);
+    const snap = await getDocs(coll);
+    const batch = writeBatch(db);
+    snap.docs.forEach(d => batch.update(d.ref, { unitId }));
+    await batch.commit();
+  }
+}
+
+// --- App settings ---
+export async function getAppSettings() {
+  const snap = await getDoc(appSettingsDoc);
+  return snap.exists() ? snap.data() : {};
+}
+
+// --- Client error logs ---
+export function logClientError(payload) {
+  return addDoc(clientErrorsCollection, {
+    ...payload,
+    ts: payload.ts ? (payload.ts instanceof Date ? Timestamp.fromDate(payload.ts) : payload.ts) : serverTimestamp(),
+  });
+}
+
+export async function getClientErrors(opts = {}) {
+  const { from, to, route } = opts;
+  let q = clientErrorsCollection;
+  if (route) q = query(q, where('route', '==', route));
+  if (from) q = query(q, where('ts', '>=', from));
+  if (to) q = query(q, where('ts', '<=', to));
+  q = query(q, orderBy('ts', 'desc'), limitFn(100));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+export async function cleanOldClientErrors(days = 90) {
+  const cutoff = Timestamp.fromDate(new Date(Date.now() - days * 24 * 60 * 60 * 1000));
+  const q = query(clientErrorsCollection, where('ts', '<', cutoff));
+  const snap = await getDocs(q);
+  const batch = writeBatch(db);
+  snap.docs.forEach(d => batch.delete(d.ref));
+  await batch.commit();
+}
+

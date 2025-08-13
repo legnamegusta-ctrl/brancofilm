@@ -1,6 +1,6 @@
 import { auth } from './firebase-config.js';
 import { navigate } from './router.js';
-import { ensureUserDocOnLogin, enableOfflinePersistence } from './services/firestoreService.js';
+import { ensureUserDocOnLogin, enableOfflinePersistence, getAppSettings, getUnits, setServiceUnit } from './services/firestoreService.js';
 import { requestPermissionAndToken } from './messaging.js';
 import {
   signInWithEmailAndPassword,
@@ -40,6 +40,7 @@ const nav = document.getElementById('main-nav');
 const whoami = document.getElementById('whoami');
 const appContainer = document.getElementById('app-container');
 const btnSignOut = document.getElementById('btnSignOut');
+const unitSwitcher = document.getElementById('unit-switcher');
 
 function mapError(code) {
   const map = {
@@ -179,13 +180,36 @@ resetForm?.addEventListener('submit', async (e) => {
 
 btnSignOut?.addEventListener('click', () => signOutUser());
 
+let currentUnitId = null;
+export function getCurrentUnitId() { return currentUnitId; }
+
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     const userDoc = await ensureUserDocOnLogin(user);
     window.sessionState = { role: userDoc?.role || 'user' };
+    const settings = await getAppSettings().catch(() => ({}));
+    window.sessionState.multiUnit = !!settings.multiUnit;
+    currentUnitId = userDoc?.unitId || null;
     document.querySelectorAll('.admin-only').forEach(el => {
       el.style.display = window.sessionState.role === 'admin' ? '' : 'none';
     });
+    if (window.sessionState.multiUnit) {
+      const units = await getUnits();
+      if (units.length) {
+        unitSwitcher.innerHTML = units.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+        unitSwitcher.value = currentUnitId || units[0].id;
+        currentUnitId = unitSwitcher.value;
+        setServiceUnit(currentUnitId);
+        unitSwitcher.style.display = '';
+        unitSwitcher.addEventListener('change', () => {
+          currentUnitId = unitSwitcher.value;
+          setServiceUnit(currentUnitId);
+          document.dispatchEvent(new CustomEvent('unit:changed', { detail: currentUnitId }));
+        });
+      }
+    } else {
+      setServiceUnit(null);
+    }
     whoami.textContent = user.email;
     nav.style.display = '';
     authShell.style.display = 'none';
@@ -196,7 +220,10 @@ onAuthStateChanged(auth, async (user) => {
     navigate();
   } else {
     window.sessionState = {};
+    currentUnitId = null;
     document.querySelectorAll('.admin-only').forEach(el => { el.style.display = 'none'; });
+    unitSwitcher && (unitSwitcher.style.display = 'none');
+    setServiceUnit(null);
     whoami.textContent = '';
     nav.style.display = 'none';
     authShell.style.display = '';
