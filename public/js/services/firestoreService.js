@@ -50,7 +50,6 @@ export async function getCustomers(opts = {}) {
 
   const arr = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   arr.lastId = snap.docs.length ? snap.docs[snap.docs.length - 1].id : null;
-  const cacheKey = `customers_${unitId || 'all'}_${order}_${limitCount || 0}_${startAfterId || 'start'}`;
   memCache[cacheKey] = arr;
   return arr;
 }
