@@ -98,3 +98,33 @@ exports.customerLog = logChange('customers');
 exports.vehicleLog = logChange('vehicles');
 exports.serviceLog = logChange('services');
 exports.orderLog = logChange('orders');
+
+async function handleQuoteDecision(req, res, status) {
+  const token = req.query.token;
+  if (!token) return res.status(400).send('token missing');
+  const pubRef = db.collection('quotes_public').doc(token);
+  const snap = await pubRef.get();
+  if (!snap.exists) return res.status(404).send('not found');
+  const data = snap.data();
+  const quoteId = data.quoteId;
+  if (!quoteId) return res.status(400).send('invalid');
+  const quoteRef = db.collection('quotes').doc(quoteId);
+  await quoteRef.update({
+    status,
+    decisionAt: admin.firestore.FieldValue.serverTimestamp(),
+    decisionSource: 'public'
+  });
+  await db.collection('auditLogs').add({
+    collection: 'quotes',
+    docId: quoteId,
+    action: 'update',
+    diff: { status: { before: data.status, after: status } },
+    ts: admin.firestore.FieldValue.serverTimestamp(),
+    actorUid: null,
+    actorEmail: null
+  });
+  return res.json({ ok: true });
+}
+
+exports.acceptQuote = functions.https.onRequest((req, res) => handleQuoteDecision(req, res, 'aceito'));
+exports.rejectQuote = functions.https.onRequest((req, res) => handleQuoteDecision(req, res, 'rejeitado'));

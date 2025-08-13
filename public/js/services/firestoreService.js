@@ -9,12 +9,16 @@ import {
   Timestamp, setDoc, writeBatch,
   arrayUnion, enableIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getStorage, ref, listAll, uploadBytes, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 // --- Coleções ---
 const customersCollection = collection(db, 'customers');
 const vehiclesCollection  = collection(db, 'vehicles');
 const servicosCollection  = collection(db, 'services');
 const ordersCollection    = collection(db, 'orders');
+const quotesCollection    = collection(db, 'quotes');
 
 // --- Clientes ---
 export async function getCustomers(opts = {}) {
@@ -362,4 +366,158 @@ export async function hasScheduleConflict({ customerId, vehicleId, start, end, e
 
 export function enableOfflinePersistence() {
   return enableIndexedDbPersistence(db);
+}
+
+// --- Kanban e Minha Tarefa ---
+export async function getOrdersByStatus(status) {
+  const q = query(
+    ordersCollection,
+    where('status', '==', status),
+    orderBy('kanbanOrder', 'asc')
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+export async function updateOrdersKanban(updates = []) {
+  const batch = writeBatch(db);
+  updates.forEach(u => {
+    const ref = doc(ordersCollection, u.id);
+    batch.update(ref, {
+      status: u.status,
+      kanbanOrder: u.kanbanOrder,
+      updatedAt: serverTimestamp()
+    });
+  });
+  await batch.commit();
+}
+
+export function setOrderAssignedTo(orderId, uid) {
+  return updateDoc(doc(ordersCollection, orderId), { assignedTo: uid });
+}
+
+export async function getOrdersAssignedTo(uid) {
+  const q = query(
+    ordersCollection,
+    where('assignedTo', '==', uid),
+    orderBy('scheduledStart', 'asc'),
+    orderBy('createdAt', 'desc')
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+export async function countOrderPhotos(orderId) {
+  const storage = getStorage();
+  const folder = ref(storage, `orders/${orderId}/photos`);
+  const res = await listAll(folder).catch(() => ({ items: [] }));
+  return res.items.length;
+}
+
+// --- Pagamentos ---
+function paymentsCollection(orderId) {
+  return collection(db, `orders/${orderId}/payments`);
+}
+
+export async function addPayment(orderId, data) {
+  const collRef = paymentsCollection(orderId);
+  return addDoc(collRef, {
+    ...data,
+    amount: Number(data.amount) || 0,
+    paidAt: data.paidAt || serverTimestamp()
+  });
+}
+
+export async function listPayments(orderId) {
+  const snap = await getDocs(query(paymentsCollection(orderId), orderBy('paidAt', 'asc')));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+export function deletePayment(orderId, paymentId) {
+  return deleteDoc(doc(db, `orders/${orderId}/payments/${paymentId}`));
+}
+
+export function sumPayments(payments = []) {
+  return payments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+}
+
+// --- Assinatura ---
+export async function saveSignature(orderId, blob, opts = {}) {
+  const storage = getStorage();
+  const path = `orders/${orderId}/signature.png`;
+  const sref = ref(storage, path);
+  await uploadBytes(sref, blob, {
+    contentType: 'image/png',
+    customMetadata: { uploadedBy: opts.uploadedBy || '' }
+  });
+  return getDownloadURL(sref);
+}
+
+export function getSignatureURL(orderId) {
+  const storage = getStorage();
+  const sref = ref(storage, `orders/${orderId}/signature.png`);
+  return getDownloadURL(sref);
+}
+
+// --- Orçamentos ---
+export async function getQuotes() {
+  const snap = await getDocs(query(quotesCollection, orderBy('createdAt', 'desc')));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+export async function getQuoteById(id) {
+  const dref = await getDoc(doc(quotesCollection, id));
+  return dref.exists() ? { id: dref.id, ...dref.data() } : null;
+}
+
+export async function addQuote(data) {
+  const res = await addDoc(quotesCollection, {
+    ...data,
+    status: data.status || 'rascunho',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+  return res.id;
+}
+
+export function updateQuote(id, data) {
+  return updateDoc(doc(quotesCollection, id), {
+    ...data,
+    updatedAt: serverTimestamp()
+  });
+}
+
+export function deleteQuote(id) {
+  return deleteDoc(doc(quotesCollection, id));
+}
+
+function makeToken() {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let t = '';
+  for (let i = 0; i < 20; i++) t += chars[Math.floor(Math.random()*chars.length)];
+  return t;
+}
+
+export async function createPublicQuoteSnapshot(quoteId) {
+  const quote = await getQuoteById(quoteId);
+  if (!quote) return null;
+  const token = makeToken();
+  const data = { ...quote };
+  delete data.id;
+  const pubRef = doc(collection(db, 'quotes_public'), token);
+  await setDoc(pubRef, { ...data, quoteId });
+  return token;
+}
+
+export async function convertQuoteToOrder(quoteId) {
+  const quote = await getQuoteById(quoteId);
+  if (!quote) return null;
+  const { customerId, vehicleId, items, discount, total, notes } = quote;
+  const res = await addDoc(ordersCollection, {
+    customerId, vehicleId, items, discount, total, notes,
+    status: 'novo',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+  return res.id;
 }

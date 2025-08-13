@@ -10,5 +10,10 @@ service firebase.storage {
       allow create, update: if signedIn();
       allow delete: if signedIn() && (isAdmin() || request.auth.uid == resource.metadata.uploadedBy);
     }
+    match /orders/{orderId}/signature/{fileName} {
+      allow read: if signedIn();
+      allow create, update: if signedIn();
+      allow delete: if signedIn() && (isAdmin() || request.auth.uid == resource.metadata.uploadedBy);
+    }
   }
 }

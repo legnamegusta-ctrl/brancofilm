@@ -17,6 +17,10 @@ service cloud.firestore {
       allow read: if signedIn();
       allow write: if isAdmin();
     }
+    match /quotes_public/{token} {
+      allow read: if true;
+      allow write: if false;
+    }
     match /{document=**} {
       allow read, write: if signedIn();
     }
@@ -26,7 +30,11 @@ service cloud.firestore {
 // índices necessários:
 // orders(scheduledStart asc)
 // orders(status asc, createdAt desc)
+// orders(status asc, kanbanOrder asc)
+// orders(assignedTo asc, scheduledStart asc)
 // orders(customerId asc, scheduledStart asc)
 // orders(vehicleId asc, scheduledStart asc)
+// quotes(status asc, createdAt desc)
+// quotes_public(token asc)
 // users(role asc)
 // services(createdAt desc)

@@ -6,6 +6,10 @@ import { renderDashboardView } from './views/dashboardView.js';
 import { renderReportsView } from './views/reportsView.js';
 import { renderSettingsView } from './views/settingsView.js';
 import { renderUsersView } from './views/usersView.js';
+import { renderKanbanView } from './views/kanbanView.js';
+import { renderMyWorkView } from './views/myWorkView.js';
+import { renderQuotesView } from './views/quotesView.js';
+import { renderQuotePublicView } from './views/quotePublicView.js';
 import { auth } from './firebase-config.js';
 
 const appContainer = document.getElementById('app-container');
@@ -30,15 +34,19 @@ const routes = {
   '#clientes': renderClientesView,
   '#servicos': renderServicosView,
   '#orders': renderOrdersView,
+  '#kanban': renderKanbanView,
+  '#my-work': renderMyWorkView,
+  '#orcamentos': renderQuotesView,
   '#relatorios': renderReportsView,
   '#config': renderSettingsView,
   '#usuarios': renderUsersView,
+  '#q': renderQuotePublicView,
 };
 
 export function navigate() {
   const hash = location.hash || '#dashboard';
 
-  if (!auth.currentUser && hash !== '#login') {
+  if (!auth.currentUser && hash !== '#login' && !hash.startsWith('#q/')) {
     location.hash = '#login';
     return;
   }
