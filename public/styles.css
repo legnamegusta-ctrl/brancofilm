@@ -309,6 +309,14 @@ main#app-container {
     font-weight: 600;
 }
 
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
 .input-group {
     display: flex;
     flex-direction: column;

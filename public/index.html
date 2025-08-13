@@ -22,13 +22,14 @@
 
     <div class="auth-shell" style="display:none;">
         <div class="auth-card">
-            <div class="tabs">
-                <button id="tab-signin" class="tab-btn" role="tab" aria-selected="true">Entrar</button>
-                <button id="tab-signup" class="tab-btn" role="tab" aria-selected="false">Criar conta</button>
+            <div class="tabs" role="tablist">
+                <button id="tab-signin" class="tab-btn" role="tab" aria-selected="true" aria-controls="signin-form" data-target="#signin-form">Entrar</button>
+                <button id="tab-signup" class="tab-btn" role="tab" aria-selected="false" aria-controls="signup-form" data-target="#signup-form">Criar conta</button>
+                <button id="tab-reset" class="tab-btn" role="tab" aria-selected="false" aria-controls="reset-form" data-target="#reset-form">Redefinir senha</button>
             </div>
             <div id="auth-alert" class="alert" aria-live="polite"></div>
 
-            <form id="signin-form" class="grid mt" aria-busy="false">
+            <form id="signin-form" class="tab-panel grid mt active" aria-busy="false" role="tabpanel" aria-labelledby="tab-signin">
                 <div class="input-group">
                     <label for="signin-email">Email</label>
                     <input id="signin-email" type="email" class="input" required />
@@ -49,7 +50,7 @@
                 </button>
             </form>
 
-            <form id="signup-form" class="grid mt" hidden aria-busy="false">
+            <form id="signup-form" class="tab-panel grid mt" aria-busy="false" role="tabpanel" aria-labelledby="tab-signup" hidden>
                 <div class="input-group">
                     <label for="signup-email">Email</label>
                     <input id="signup-email" type="email" class="input" required />
@@ -69,7 +70,7 @@
                 </button>
             </form>
 
-            <form id="reset-form" class="grid mt" hidden aria-busy="false">
+            <form id="reset-form" class="tab-panel grid mt" aria-busy="false" role="tabpanel" aria-labelledby="tab-reset" hidden>
                 <div class="input-group">
                     <label for="reset-email">Email</label>
                     <input id="reset-email" type="email" class="input" required />
