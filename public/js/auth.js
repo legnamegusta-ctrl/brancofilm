@@ -29,11 +29,11 @@ const authAlert = document.getElementById('auth-alert');
 const signinForm = document.getElementById('signin-form');
 const signupForm = document.getElementById('signup-form');
 const resetForm = document.getElementById('reset-form');
-const tabSignin = document.getElementById('tab-signin');
-const tabSignup = document.getElementById('tab-signup');
 const linkReset = document.getElementById('link-reset');
 const backToLogin = document.getElementById('back-to-login');
 const showPassBtns = document.querySelectorAll('.show-pass-btn');
+const tabButtons = document.querySelectorAll('.tab-btn');
+const tabPanels = document.querySelectorAll('.tab-panel');
 
 const header = document.querySelector('header');
 const nav = document.getElementById('main-nav');
@@ -74,39 +74,44 @@ function setBusy(form, busy) {
   if (spinner) spinner.hidden = !busy;
 }
 
-function toggleTab(name) {
+function activateTab(targetSelector) {
   clearAlert();
-  if (name === 'signin') {
-    tabSignin.setAttribute('aria-selected', 'true');
-    tabSignup.setAttribute('aria-selected', 'false');
-    signinForm.hidden = false;
-    signupForm.hidden = true;
-    resetForm.hidden = true;
-    if (linkReset) linkReset.style.display = '';
-  } else if (name === 'signup') {
-    tabSignin.setAttribute('aria-selected', 'false');
-    tabSignup.setAttribute('aria-selected', 'true');
-    signinForm.hidden = true;
-    signupForm.hidden = false;
-    resetForm.hidden = true;
-    if (linkReset) linkReset.style.display = 'none';
-  } else if (name === 'reset') {
-    tabSignin.setAttribute('aria-selected', 'false');
-    tabSignup.setAttribute('aria-selected', 'false');
-    signinForm.hidden = true;
-    signupForm.hidden = true;
-    resetForm.hidden = false;
-    if (linkReset) linkReset.style.display = 'none';
-  }
+  const target = document.querySelector(targetSelector);
+  if (!target) return;
+  tabButtons.forEach(btn => {
+    const selected = btn.dataset.target === targetSelector;
+    btn.setAttribute('aria-selected', selected ? 'true' : 'false');
+  });
+  tabPanels.forEach(panel => {
+    const isActive = `#${panel.id}` === targetSelector;
+    if (isActive) {
+      panel.classList.add('active');
+      panel.removeAttribute('hidden');
+      const first = panel.querySelector('input, button, select, textarea, [tabindex]:not([tabindex="-1"])');
+      first?.focus();
+      if (linkReset) linkReset.style.display = targetSelector === '#signin-form' ? '' : 'none';
+    } else {
+      panel.classList.remove('active');
+      panel.setAttribute('hidden', '');
+    }
+  });
 }
 
-tabSignin?.addEventListener('click', () => toggleTab('signin'));
-tabSignup?.addEventListener('click', () => toggleTab('signup'));
+function initTabs() {
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => activateTab(btn.dataset.target));
+  });
+  const initial = document.querySelector('.tab-btn[aria-selected="true"]');
+  if (initial) activateTab(initial.dataset.target);
+}
+
+document.addEventListener('DOMContentLoaded', initTabs);
+
 linkReset?.addEventListener('click', (e) => {
   e.preventDefault();
-  toggleTab('reset');
+  activateTab('#reset-form');
 });
-backToLogin?.addEventListener('click', () => toggleTab('signin'));
+backToLogin?.addEventListener('click', () => activateTab('#signin-form'));
 
 showPassBtns.forEach(btn => {
   btn.addEventListener('click', () => {
@@ -161,11 +166,11 @@ resetForm?.addEventListener('submit', async (e) => {
   clearAlert();
   const email = document.getElementById('reset-email').value.trim();
   setBusy(resetForm, true);
-  try {
-    await sendReset(email);
-    showAlert('success', 'Email de redefinição enviado.');
-    toggleTab('signin');
-  } catch (err) {
+    try {
+      await sendReset(email);
+      showAlert('success', 'Email de redefinição enviado.');
+      activateTab('#signin-form');
+    } catch (err) {
     showAlert('error', mapError(err.code));
   } finally {
     setBusy(resetForm, false);
