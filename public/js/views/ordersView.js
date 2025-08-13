@@ -4,9 +4,11 @@ import {
   getCustomers, getCustomerById,
   getVehiclesForCustomer, getServicos
 } from '../services/firestoreService.js';
+import { listOrderPhotos, uploadOrderPhotos, deleteOrderPhoto } from '../storageService.js';
 import { Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const appContainer = document.getElementById('app-container');
+const modalPlaceholder = document.getElementById('modal-placeholder');
 
 export const renderOrdersView = async (param) => {
   if (param && param !== 'new') {
@@ -208,6 +210,7 @@ async function renderOrderDetail(orderId) {
     form.removeAttribute('aria-busy');
     location.hash = `#orders/${newId}`;
   };
+  if (!isNew) initPhotos(orderId);
 }
 
 function calcTotal() {
@@ -234,3 +237,64 @@ function formatDate(ts){ if(!ts) return ''; const d=ts.seconds? new Date(ts.seco
 const esc  = (s='') => s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const attr = (s='') => esc(s).replace(/"/g,'&quot;');
 
+
+async function initPhotos(orderId) {
+  await loadPhotos(orderId);
+  const drop = document.getElementById('photo-drop');
+  const input = document.getElementById('photo-input');
+  const selectBtn = document.getElementById('photo-select');
+  const uploadList = document.getElementById('upload-list');
+
+  const handle = files => {
+    const arr = Array.from(files);
+    const valid = [];
+    for (const f of arr) {
+      if (!['image/jpeg','image/png','image/webp'].includes(f.type)) {
+        alert(f.type.includes('heic') ? 'HEIC não suportado' : 'Tipo inválido');
+        continue;
+      }
+      if (f.size > 5*1024*1024) { alert('Tamanho excedido'); continue; }
+      const item = document.createElement('div');
+      item.className = 'upload-item';
+      item.textContent = `${f.name} - 0%`;
+      uploadList.appendChild(item);
+      valid.push({file: f, el: item});
+    }
+    if (!valid.length) return;
+    drop.classList.add('disabled');
+    selectBtn.disabled = true;
+    uploadOrderPhotos(orderId, valid.map(v=>v.file), { onProgress: (file,pct)=>{
+      const it = valid.find(v=>v.file===file);
+      if (it) it.el.textContent = `${file.name} - ${pct}%`;
+    }}).then(()=>{ uploadList.innerHTML=''; loadPhotos(orderId); })
+      .catch(()=>alert('Falha no upload'))
+      .finally(()=>{ drop.classList.remove('disabled'); selectBtn.disabled=false; });
+  };
+
+  drop.addEventListener('dragover', e=>{ e.preventDefault(); drop.classList.add('drag'); });
+  drop.addEventListener('dragleave', ()=>drop.classList.remove('drag'));
+  drop.addEventListener('drop', e=>{ e.preventDefault(); drop.classList.remove('drag'); handle(e.dataTransfer.files); });
+  selectBtn.onclick = () => input.click();
+  input.onchange = e => { handle(e.target.files); input.value=''; };
+}
+
+async function loadPhotos(orderId) {
+  const grid = document.getElementById('photos-grid');
+  const list = await listOrderPhotos(orderId);
+  if (!list.length) { grid.innerHTML = '<p class="muted">Sem fotos</p>'; return; }
+  grid.innerHTML = list.map(p=>`<figure><img src="${p.url}" alt="${esc(p.name)}"/><figcaption class="actions"><button class="link" data-view="${p.url}">Ver</button> <button class="link" data-del="${p.path}">Excluir</button></figcaption></figure>`).join('');
+  grid.onclick = async e => {
+    const view = e.target.closest('[data-view]');
+    const del = e.target.closest('[data-del]');
+    if (view) openPhotoModal(view.dataset.view);
+    else if (del) { if(confirm('Excluir foto?')){ await deleteOrderPhoto(del.dataset.del); loadPhotos(orderId); } }
+  };
+}
+
+function openPhotoModal(url) {
+  modalPlaceholder.innerHTML = `<div class="modal"><div class="card"><img src="${url}" style="width:100%" alt="Foto"/><div class="card-actions"><button class="btn" id="closePhoto">Fechar</button></div></div></div>`;
+  document.getElementById('closePhoto').onclick = closeModal;
+  document.addEventListener('keydown', escClose);
+}
+function closeModal(){ modalPlaceholder.innerHTML=''; document.removeEventListener('keydown', escClose); }
+function escClose(e){ if(e.key==='Escape') closeModal(); }
