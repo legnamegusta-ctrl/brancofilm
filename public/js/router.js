@@ -14,6 +14,7 @@ import { renderReportsAdvancedView } from './views/reportsAdvancedView.js';
 import { renderGoalsView } from './views/goalsView.js';
 import { renderUnitsView } from './views/unitsView.js';
 import { renderDevLogsView } from './views/devLogsView.js';
+import { renderUiKitView } from './views/uiKitView.js';
 import { auth } from './firebase-config.js';
 
 const appContainer = document.getElementById('app-container');
@@ -43,6 +44,7 @@ const routes = {
   '#orcamentos': renderQuotesView,
   '#relatorios': renderReportsView,
   '#relatorios-avancados': renderReportsAdvancedView,
+  '#ui-kit': renderUiKitView,
   '#config': (param) => {
     if (param === 'goals') return renderGoalsView();
     return renderSettingsView();

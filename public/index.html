@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestão Estética Automotiva</title>
-    <meta name="theme-color" content="#0f172a">
+    <meta name="theme-color" id="meta-theme" content="#0f172a">
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="icon" type="image/svg+xml" href="/icon.svg">
     <link rel="stylesheet" href="styles.css">
@@ -12,6 +12,8 @@
     <script>
       const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
       document.documentElement.dataset.theme = theme;
+      const metaTheme = document.querySelector('#meta-theme');
+      metaTheme.setAttribute('content', getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
     </script>
 </head>
 <body>
@@ -33,6 +35,7 @@
             <a href="#config/goals" class="admin-only" style="display:none;" data-i18n="navbar.goals">Metas</a>
             <a href="#unidades" class="admin-only" style="display:none;" data-i18n="navbar.units">Unidades</a>
             <a href="#dev/logs" class="admin-only" style="display:none;" data-i18n="navbar.logs">Logs</a>
+            <a href="#ui-kit" class="admin-only" style="display:none;">UI Kit</a>
             <select id="unit-switcher" class="admin-only" style="display:none;"></select>
             <span id="whoami" class="muted"></span>
             <span id="net-status" class="offline-indicator" hidden>OFFLINE</span>
@@ -126,10 +129,12 @@
         navigator.serviceWorker.register('/service-worker.js');
         navigator.serviceWorker.register('/firebase-messaging-sw.js');
       }
+      const metaThemeEl = document.getElementById('meta-theme');
       document.getElementById('themeToggle').addEventListener('click', () => {
         const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
         document.documentElement.dataset.theme = t;
         localStorage.setItem('theme', t);
+        metaThemeEl.setAttribute('content', getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
       });
     </script>
 </body>
