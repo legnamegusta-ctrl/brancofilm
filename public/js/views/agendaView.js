@@ -1,204 +1,105 @@
 // js/views/agendaView.js
-
-import { getServiceOrders, addServiceOrder, updateServiceOrder, deleteServiceOrder, getServiceOrderById, getCustomers, getVehiclesForCustomer, getServicos } from '../services/firestoreService.js';
+import { getServiceOrders, addServiceOrder, updateServiceOrder, deleteServiceOrder, getCustomers, getServicos } from '../services/firestoreService.js';
 import { Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const appContainer = document.getElementById('app-container');
 const modalPlaceholder = document.getElementById('modal-placeholder');
-let calendar; // Manter a instância do calendário acessível
+let calendar;
 
 export const renderAgendaView = async () => {
-    appContainer.innerHTML = `
-        <section>
-            <h2>Agenda de Serviços</h2>
-            <div id="calendar-container"></div>
-        </section>
-    `;
+  appContainer.innerHTML = `
+    <section>
+      <h2>Agenda de Serviços</h2>
+      <div id="calendar-container" class="card" style="padding:8px"></div>
+      <div class="mt"><button class="btn" id="btnNewEvent">Novo agendamento</button></div>
+    </section>
+  `;
 
-    const calendarEl = document.getElementById('calendar-container');
-    const events = await getServiceOrders();
+  const { Calendar } = window; // FullCalendar já está no index.html
+  const orders = await getServiceOrders();
+  const events = orders.map(o => ({
+    id: o.id,
+    title: o.title || 'Serviço',
+    start: o.start?.seconds ? new Date(o.start.seconds*1000) : (o.start || null),
+    end:   o.end?.seconds   ? new Date(o.end.seconds*1000)   : (o.end   || null),
+  }));
 
-    calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'timeGridWeek', // Visão inicial
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
-        locale: 'pt-br', // Traduz para o português
-        editable: true, // Permite arrastar e redimensionar
-        selectable: true, // Permite selecionar horários
-        events: events,
+  const el = document.getElementById('calendar-container');
+  calendar = new Calendar(el, {
+    initialView: 'dayGridMonth',
+    height: 'auto',
+    events,
+    eventClick: (info) => openEventModal({ ...orders.find(o=>o.id===info.event.id), id: info.event.id }),
+  });
+  calendar.render();
 
-        // --- EVENTOS DO CALENDÁRIO ---
-
-        // Disparado ao clicar em um horário vago
-        select: (info) => {
-            showServiceOrderModal({ start: info.start, end: info.end });
-        },
-
-        // Disparado ao clicar em um evento existente
-        eventClick: async (info) => {
-            const orderDetails = await getServiceOrderById(info.event.id);
-            showServiceOrderModal(orderDetails);
-        },
-
-        // Disparado após arrastar um evento para uma nova data/hora
-        eventDrop: async (info) => {
-            if (!confirm("Tem certeza que deseja reagendar este serviço?")) {
-                info.revert(); // Desfaz a ação se o usuário cancelar
-                return;
-            }
-            const dataToUpdate = {
-                start: Timestamp.fromDate(info.event.start),
-                end: Timestamp.fromDate(info.event.end),
-            };
-            await updateServiceOrder(info.event.id, dataToUpdate);
-        }
-    });
-
-    calendar.render();
+  document.getElementById('btnNewEvent').onclick = () => openEventModal(null);
 };
 
+async function openEventModal(order) {
+  const clients  = await getCustomers();
+  const servicos = await getServicos();
+  const isEditing = !!order;
+  const startISO = toLocalValue(order?.start);
+  const endISO   = toLocalValue(order?.end);
 
-// --- MODAL DE ORDEM DE SERVIÇO ---
-async function showServiceOrderModal(data) {
-    const isEditing = data.id !== undefined;
-    const modalTitle = isEditing ? 'Editar Agendamento' : 'Novo Agendamento';
+  modalPlaceholder.innerHTML = `
+    <div class="card" style="position:fixed;inset:0;max-width:560px;margin:24px auto;background:#fff;z-index:50;overflow:auto">
+      <div class="card-header">${isEditing ? 'Editar' : 'Novo'} agendamento</div>
+      <div class="card-body">
+        <form id="form-event" class="grid">
+          <label>Título <input id="eTitle" value="${attr(order?.title||'')}" required /></label>
+          <label>Cliente
+            <select id="eCustomer">
+              <option value="">— selecione —</option>
+              ${clients.map(c=>`<option value="${c.id}" ${order?.customerId===c.id?'selected':''}>${esc(c.name||'-')}</option>`).join('')}
+            </select>
+          </label>
+          <label>Serviço
+            <select id="eServico">
+              <option value="">— selecione —</option>
+              ${servicos.map(s=>`<option value="${s.id}" ${order?.servicoId===s.id?'selected':''}>${esc(s.name||'-')}</option>`).join('')}
+            </select>
+          </label>
+          <label>Início <input id="eStart" type="datetime-local" value="${startISO||''}" required /></label>
+          <label>Fim <input id="eEnd" type="datetime-local" value="${endISO||''}" /></label>
+          <div class="card-actions">
+            <button class="btn">${isEditing ? 'Salvar' : 'Criar'}</button>
+            ${isEditing ? '<button type="button" id="eDelete" class="link">Excluir</button>' : ''}
+            <button type="button" id="eCancel" class="link">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
 
-    // Pré-carrega os dados necessários para os menus dropdown
-    const customers = await getCustomers();
-    const services = await getServicos();
-
-    const customerOptions = customers.map(c => `<option value="${c.id}" ${isEditing && data.customer.id === c.id ? 'selected' : ''}>${c.name}</option>`).join('');
-    const servicesOptions = services.map(s => `<option value="${s.id}" data-price="${s.price}">${s.name}</option>`).join('');
-
-    const modalHtml = `
-        <div class="modal-overlay active">
-            <div class="modal-content">
-                <div class="modal-header"><h2>${modalTitle}</h2><button class="modal-close-btn">&times;</button></div>
-                <form id="order-form">
-                    <div class="form-group">
-                        <label for="customer-select">Cliente</label>
-                        <select id="customer-select" required>${customerOptions}</select>
-                    </div>
-                    <div class="form-group">
-                        <label for="vehicle-select">Veículo</label>
-                        <select id="vehicle-select" required><option value="">Selecione um cliente primeiro</option></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="services-select">Serviços</label>
-                        <select id="services-select" multiple style="height: 120px;">${servicesOptions}</select>
-                    </div>
-                    <div class="form-group">
-                        <label for="order-start">Início</label>
-                        <input type="datetime-local" id="order-start" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="order-end">Fim</label>
-                        <input type="datetime-local" id="order-end" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="order-status">Status</label>
-                        <select id="order-status">
-                            <option value="Agendado">Agendado</option>
-                            <option value="Em Andamento">Em Andamento</option>
-                            <option value="Pronto para Retirada">Pronto para Retirada</option>
-                            <option value="Finalizado">Finalizado</option>
-                            <option value="Pago">Pago</option>
-                        </select>
-                    </div>
-                    <div class="modal-actions">
-                        ${isEditing ? `<button type="button" id="delete-order-btn" class="btn btn-danger">Excluir</button>` : ''}
-                        <button type="button" class="btn btn-secondary modal-cancel-btn">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">${isEditing ? 'Salvar' : 'Agendar'}</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    `;
-    modalPlaceholder.innerHTML = modalHtml;
-
-    // --- LÓGICA DO MODAL ---
-    const customerSelect = document.getElementById('customer-select');
-    const vehicleSelect = document.getElementById('vehicle-select');
-    const startInput = document.getElementById('order-start');
-    const endInput = document.getElementById('order-end');
-    const statusSelect = document.getElementById('order-status');
-
-    // Função para carregar veículos quando um cliente é selecionado
-    const loadVehicles = async (customerId) => {
-        const vehicles = await getVehiclesForCustomer(customerId);
-        vehicleSelect.innerHTML = vehicles.map(v => `<option value="${v.id}">${v.make} ${v.model} - ${v.plate}</option>`).join('');
+  document.getElementById('eCancel').onclick = closeModal;
+  if (isEditing) {
+    document.getElementById('eDelete').onclick = async () => {
+      if (confirm('Excluir agendamento?')) {
+        await deleteServiceOrder(order.id).catch(()=>{});
+        closeModal(); renderAgendaView();
+      }
     };
+  }
 
-    // Preenche os campos se estiver editando
-    if (isEditing) {
-        await loadVehicles(data.customer.id);
-        vehicleSelect.value = data.vehicle.id;
-        // Seleciona os serviços que já estavam na O.S.
-        data.services.forEach(service => {
-            const option = document.querySelector(`#services-select option[value="${service.id}"]`);
-            if (option) option.selected = true;
-        });
-        statusSelect.value = data.status;
-    } else if (customers.length > 0) {
-        // Se for novo agendamento, carrega os veículos do primeiro cliente da lista
-        loadVehicles(customerSelect.value);
-    }
-
-    // Formata as datas para o input datetime-local
-    const formatDateTimeLocal = (date) => new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
-    startInput.value = formatDateTimeLocal(isEditing ? data.start.toDate() : data.start);
-    endInput.value = formatDateTimeLocal(isEditing ? data.end.toDate() : data.end);
-    
-    // Listeners do modal
-    customerSelect.addEventListener('change', () => loadVehicles(customerSelect.value));
-    document.querySelector('.modal-close-btn').addEventListener('click', closeModal);
-    document.querySelector('.modal-cancel-btn').addEventListener('click', closeModal);
-
-    if (isEditing) {
-        document.getElementById('delete-order-btn').addEventListener('click', async () => {
-            if (confirm('Tem certeza que deseja excluir este agendamento?')) {
-                await deleteServiceOrder(data.id);
-                closeModal();
-                calendar.refetchEvents();
-            }
-        });
-    }
-
-    document.getElementById('order-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        // Coleta os dados dos serviços selecionados
-        const selectedServices = Array.from(document.getElementById('services-select').selectedOptions)
-            .map(opt => ({ id: opt.value, name: opt.text, price: Number(opt.dataset.price) }));
-        
-        // Coleta os dados do cliente e veículo selecionados
-        const selectedCustomerOption = customerSelect.options[customerSelect.selectedIndex];
-        const selectedVehicleOption = vehicleSelect.options[vehicleSelect.selectedIndex];
-
-        const orderData = {
-            customer: { id: selectedCustomerOption.value, name: selectedCustomerOption.text },
-            vehicle: { id: selectedVehicleOption.value, model: selectedVehicleOption.text.split(' - ')[0] },
-            services: selectedServices,
-            totalAmount: selectedServices.reduce((sum, s) => sum + s.price, 0),
-            start: Timestamp.fromDate(new Date(startInput.value)),
-            end: Timestamp.fromDate(new Date(endInput.value)),
-            status: statusSelect.value,
-        };
-
-        if (isEditing) {
-            await updateServiceOrder(data.id, orderData);
-        } else {
-            await addServiceOrder(orderData);
-        }
-
-        closeModal();
-        renderAgendaView(); // Recarrega a view para mostrar o novo evento
-    });
+  document.getElementById('form-event').onsubmit = async (e) => {
+    e.preventDefault();
+    const data = {
+      title: document.getElementById('eTitle').value.trim(),
+      customerId: document.getElementById('eCustomer').value || null,
+      servicoId:  document.getElementById('eServico').value || null,
+      start: fromLocalValue(document.getElementById('eStart').value),
+      end:   fromLocalValue(document.getElementById('eEnd').value) || null,
+    };
+    if (isEditing) await updateServiceOrder(order.id, data);
+    else await addServiceOrder(data);
+    closeModal(); renderAgendaView();
+  };
 }
 
-function closeModal() {
-    modalPlaceholder.innerHTML = '';
-}
+function toLocalValue(v){ if(!v) return ''; const d=v.seconds?new Date(v.seconds*1000):new Date(v); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; }
+function fromLocalValue(s){ if(!s) return null; return Timestamp.fromDate(new Date(s)); }
+function closeModal(){ modalPlaceholder.innerHTML=''; }
+const esc  = (s='') => s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const attr = (s='') => esc(s).replace(/"/g,'&quot;');

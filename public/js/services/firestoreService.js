@@ -1,119 +1,82 @@
 // js/services/firestoreService.js
-
 import { db } from '../firebase-config.js';
-import { 
-    collection, 
-    query,
-    where,
-    getDocs, 
-    getDoc,
-    addDoc, 
-    doc, 
-    updateDoc, 
-    deleteDoc 
+import {
+  collection, query, where,
+  getDocs, getDoc, addDoc,
+  doc, updateDoc, deleteDoc,
+  orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// --- COLEÇÕES ---
-const servicosCollection = collection(db, 'services');
+// --- Coleções ---
 const customersCollection = collection(db, 'customers');
-const vehiclesCollection = collection(db, 'vehicles');
+const vehiclesCollection  = collection(db, 'vehicles');
+const servicosCollection  = collection(db, 'servicos');
 const serviceOrdersCollection = collection(db, 'serviceOrders');
 
-// --- FUNÇÕES DE SERVIÇOS ---
-export const getServicos = async () => {
-    const snapshot = await getDocs(servicosCollection);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-};
-// ... (outras funções de serviço permanecem iguais)
-export const getServicoById = async (id) => {
-    const servicoDoc = doc(db, 'services', id);
-    const snapshot = await getDoc(servicoDoc);
-    return snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null;
+// --- Clientes ---
+export async function getCustomers() {
+  const snap = await getDocs(query(customersCollection, orderBy('createdAt','desc'))).catch(async () => await getDocs(customersCollection));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
-export const addServico = (nome, preco) => {
-    return addDoc(servicosCollection, { name: nome, price: Number(preco), isActive: true });
-};
-export const updateServico = (id, data) => {
-    const servicoDoc = doc(db, 'services', id);
-    const dataToUpdate = { name: data.name, price: Number(data.price) };
-    return updateDoc(servicoDoc, dataToUpdate);
+export async function getCustomerById(id) {
+  const dref = await getDoc(doc(db, 'customers', id));
+  return dref.exists() ? { id: dref.id, ...dref.data() } : null;
 }
-export const deleteServico = (id) => {
-    const servicoDoc = doc(db, 'services', id);
-    return deleteDoc(servicoDoc);
+export async function addCustomer(data) {
+  const res = await addDoc(customersCollection, { ...data, createdAt: serverTimestamp() });
+  return res.id;
+}
+export function updateCustomer(id, data) {
+  return updateDoc(doc(db, 'customers', id), data);
+}
+export function deleteCustomer(id) {
+  return deleteDoc(doc(db, 'customers', id));
 }
 
-// --- FUNÇÕES DE CLIENTES ---
-export const getCustomers = async () => {
-    const snapshot = await getDocs(customersCollection);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-};
-// ... (outras funções de clientes permanecem iguais)
-export const getCustomerById = async (id) => {
-    const customerDoc = doc(db, 'customers', id);
-    const snapshot = await getDoc(customerDoc);
-    return snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null;
-};
-export const addCustomer = (data) => {
-    return addDoc(customersCollection, data);
-};
-export const updateCustomer = (id, data) => {
-    const customerDoc = doc(db, 'customers', id);
-    return updateDoc(customerDoc, data);
-};
-export const deleteCustomer = (id) => {
-    const customerDoc = doc(db, 'customers', id);
-    return deleteDoc(customerDoc);
-};
-
-// --- FUNÇÕES DE VEÍCULOS ---
-export const getVehiclesForCustomer = async (customerId) => {
-    const q = query(vehiclesCollection, where("customerId", "==", customerId));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-};
-// ... (outras funções de veículos permanecem iguais)
-export const addVehicle = (data) => {
-    return addDoc(vehiclesCollection, data);
-};
-export const deleteVehicle = (id) => {
-    const vehicleDoc = doc(db, 'vehicles', id);
-    return deleteDoc(vehicleDoc);
-};
-
-
-// --- FUNÇÕES DE ORDENS DE SERVIÇO (AGENDA) ---
-export const getServiceOrders = async () => {
-    const snapshot = await getDocs(serviceOrdersCollection);
-    // Transforma os dados do Firestore para o formato que o FullCalendar entende
-    return snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-            id: doc.id,
-            title: `${data.customer.name} - ${data.vehicle.model}`,
-            start: data.start.toDate(), // Converte Timestamp para objeto Date
-            end: data.end.toDate(),
-            extendedProps: data // Armazena todos os outros dados aqui
-        }
-    });
-};
-
-export const getServiceOrderById = async (id) => {
-    const orderDoc = doc(db, 'serviceOrders', id);
-    const snapshot = await getDoc(orderDoc);
-    return snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null;
+// --- Veículos ---
+export async function getVehiclesForCustomer(customerId) {
+  const q = query(vehiclesCollection, where('customerId','==', customerId));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+export async function addVehicle(data) {
+  const res = await addDoc(vehiclesCollection, { ...data, createdAt: serverTimestamp() });
+  return res.id;
+}
+export function deleteVehicle(id) {
+  return deleteDoc(doc(db, 'vehicles', id));
 }
 
-export const addServiceOrder = (data) => {
-    return addDoc(serviceOrdersCollection, data);
-};
+// --- Serviços ---
+export async function getServicos() {
+  const snap = await getDocs(servicosCollection);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+export function addServico(name, price) {
+  return addDoc(servicosCollection, { name, price: Number(price)||0, createdAt: serverTimestamp() });
+}
+export async function getServicoById(id) {
+  const dref = await getDoc(doc(db, 'servicos', id));
+  return dref.exists() ? { id: dref.id, ...dref.data() } : null;
+}
+export function updateServico(id, data) {
+  return updateDoc(doc(db, 'servicos', id), data);
+}
+export function deleteServico(id) {
+  return deleteDoc(doc(db, 'servicos', id));
+}
 
-export const updateServiceOrder = (id, data) => {
-    const orderDoc = doc(db, 'serviceOrders', id);
-    return updateDoc(orderDoc, data);
-};
-
-export const deleteServiceOrder = (id) => {
-    const orderDoc = doc(db, 'serviceOrders', id);
-    return deleteDoc(orderDoc);
-};
+// --- Ordens (Agenda) ---
+export async function getServiceOrders() {
+  const snap = await getDocs(serviceOrdersCollection);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+export function addServiceOrder(data) {
+  return addDoc(serviceOrdersCollection, { ...data, createdAt: serverTimestamp() });
+}
+export function updateServiceOrder(id, data) {
+  return updateDoc(doc(db, 'serviceOrders', id), data);
+}
+export function deleteServiceOrder(id) {
+  return deleteDoc(doc(db, 'serviceOrders', id));
+}
