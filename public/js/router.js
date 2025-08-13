@@ -1,4 +1,3 @@
-// js/router.js
 import { renderClientesView } from './views/clientesView.js';
 import { renderServicosView } from './views/servicosView.js';
 import { renderAgendaView } from './views/agendaView.js';
@@ -6,7 +5,7 @@ import { auth } from './firebase-config.js';
 
 const appContainer = document.getElementById('app-container');
 
-const renderDashboardView = () => {
+function renderDashboardView() {
   appContainer.innerHTML = `
     <section class="card">
       <h2>Dashboard</h2>
@@ -19,7 +18,7 @@ const renderDashboardView = () => {
       </div>
     </section>
   `;
-};
+}
 
 const routes = {
   '#dashboard': renderDashboardView,
@@ -28,13 +27,14 @@ const routes = {
   '#servicos': renderServicosView,
 };
 
-export const navigate = () => {
+export function navigate() {
   const hash = location.hash || '#dashboard';
 
   if (!auth.currentUser && hash !== '#login') {
     location.hash = '#login';
     return;
   }
+
   if (auth.currentUser && hash === '#login') {
     location.hash = '#dashboard';
     return;
@@ -47,7 +47,6 @@ export const navigate = () => {
 
   const [mainPath, param] = hash.split('/');
 
-  // link ativo
   const navLinks = document.querySelectorAll('#main-nav a');
   navLinks.forEach(link => link.classList.remove('active'));
   const activeLink = document.querySelector(`#main-nav a[href^="${mainPath}"]`);
@@ -59,4 +58,5 @@ export const navigate = () => {
   } else {
     renderDashboardView();
   }
-};
+}
+

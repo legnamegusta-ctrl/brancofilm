@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestão Estética Automotiva</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="styles.css">
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
 </head>
 <body>
-    <header style="display:none;">
+    <header>
         <h1>Minha Estética</h1>
-        <nav id="main-nav">
+        <nav id="main-nav" style="display:none;">
             <a href="#dashboard">Dashboard</a>
             <a href="#agenda">Agenda</a>
             <a href="#clientes">Clientes</a>
@@ -20,23 +20,70 @@
         </nav>
     </header>
 
-    <section id="login-view" class="card" style="display:none;max-width:360px;margin:40px auto;">
-        <h2>Entrar</h2>
-        <form id="login-form" class="grid mt">
-            <label>Email <input id="login-email" type="email" required /></label>
-            <label>Senha <input id="login-pass" type="password" required /></label>
-            <button class="btn btn-primary">Entrar</button>
-        </form>
-        <details class="mt">
-            <summary>Criar conta</summary>
-            <form id="signup-form" class="grid mt">
-                <label>Email <input id="signup-email" type="email" required /></label>
-                <label>Senha <input id="signup-pass" type="password" required /></label>
-                <button class="btn">Criar</button>
+    <div class="auth-shell" style="display:none;">
+        <div class="auth-card">
+            <div class="tabs">
+                <button id="tab-signin" class="tab-btn" role="tab" aria-selected="true">Entrar</button>
+                <button id="tab-signup" class="tab-btn" role="tab" aria-selected="false">Criar conta</button>
+            </div>
+            <div id="auth-alert" class="alert" aria-live="polite"></div>
+
+            <form id="signin-form" class="grid mt" aria-busy="false">
+                <div class="input-group">
+                    <label for="signin-email">Email</label>
+                    <input id="signin-email" type="email" class="input" required />
+                </div>
+                <div class="input-group">
+                    <label for="signin-pass">Senha</label>
+                    <div class="password-field">
+                        <input id="signin-pass" type="password" class="input" required />
+                        <button type="button" class="show-pass-btn" aria-label="Mostrar senha">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <label class="checkbox"><input type="checkbox" id="remember-me" /> Lembrar de mim</label>
+                <button type="submit" class="btn btn-primary">
+                    <span class="btn-label">Entrar</span>
+                    <span class="spinner" hidden></span>
+                </button>
             </form>
-        </details>
-        <p class="mt"><a href="#" id="reset-link">Esqueci a senha</a></p>
-    </section>
+
+            <form id="signup-form" class="grid mt" hidden aria-busy="false">
+                <div class="input-group">
+                    <label for="signup-email">Email</label>
+                    <input id="signup-email" type="email" class="input" required />
+                </div>
+                <div class="input-group">
+                    <label for="signup-pass">Senha</label>
+                    <div class="password-field">
+                        <input id="signup-pass" type="password" class="input" required minlength="6" />
+                        <button type="button" class="show-pass-btn" aria-label="Mostrar senha">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <span class="btn-label">Criar</span>
+                    <span class="spinner" hidden></span>
+                </button>
+            </form>
+
+            <form id="reset-form" class="grid mt" hidden aria-busy="false">
+                <div class="input-group">
+                    <label for="reset-email">Email</label>
+                    <input id="reset-email" type="email" class="input" required />
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <span class="btn-label">Enviar</span>
+                    <span class="spinner" hidden></span>
+                </button>
+                <button type="button" id="back-to-login" class="btn btn-secondary">Voltar</button>
+            </form>
+
+            <p class="mt"><a href="#" id="link-reset" class="link">Esqueci a senha</a></p>
+        </div>
+    </div>
 
     <main id="app-container"></main>
 
@@ -46,3 +93,4 @@
     <script type="module" src="js/main.js"></script>
 </body>
 </html>
+
