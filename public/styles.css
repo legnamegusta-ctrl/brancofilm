@@ -309,6 +309,18 @@ main#app-container {
     font-weight: 600;
 }
 
+.tab-btn[aria-selected="false"] {
+    color: var(--muted);
+}
+
+.tab-panel {
+    display: none;
+}
+
+.tab-panel:not([hidden]) {
+    display: block;
+}
+
 .input-group {
     display: flex;
     flex-direction: column;

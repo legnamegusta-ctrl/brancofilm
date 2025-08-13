@@ -23,65 +23,71 @@
     <div class="auth-shell" style="display:none;">
         <div class="auth-card">
             <div class="tabs">
-                <button id="tab-signin" class="tab-btn" role="tab" aria-selected="true">Entrar</button>
-                <button id="tab-signup" class="tab-btn" role="tab" aria-selected="false">Criar conta</button>
+                <button id="tab-signin" class="tab-btn" role="tab" aria-selected="true" data-target="#tab-login" aria-controls="tab-login">Entrar</button>
+                <button id="tab-signup" class="tab-btn" role="tab" aria-selected="false" data-target="#tab-sign" aria-controls="tab-sign">Criar conta</button>
+                <button id="tab-reset-btn" class="tab-btn" role="tab" aria-selected="false" data-target="#tab-reset" aria-controls="tab-reset">Recuperar senha</button>
             </div>
             <div id="auth-alert" class="alert" aria-live="polite"></div>
 
-            <form id="signin-form" class="grid mt" aria-busy="false">
-                <div class="input-group">
-                    <label for="signin-email">Email</label>
-                    <input id="signin-email" type="email" class="input" required />
-                </div>
-                <div class="input-group">
-                    <label for="signin-pass">Senha</label>
-                    <div class="password-field">
-                        <input id="signin-pass" type="password" class="input" required />
-                        <button type="button" class="show-pass-btn" aria-label="Mostrar senha">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
-                        </button>
+            <div id="tab-login" class="tab-panel" role="tabpanel" aria-labelledby="tab-signin">
+                <form id="signin-form" class="grid mt" aria-busy="false">
+                    <div class="input-group">
+                        <label for="signin-email">Email</label>
+                        <input id="signin-email" type="email" class="input" required />
                     </div>
-                </div>
-                <label class="checkbox"><input type="checkbox" id="remember-me" /> Lembrar de mim</label>
-                <button type="submit" class="btn btn-primary">
-                    <span class="btn-label">Entrar</span>
-                    <span class="spinner" hidden></span>
-                </button>
-            </form>
-
-            <form id="signup-form" class="grid mt" hidden aria-busy="false">
-                <div class="input-group">
-                    <label for="signup-email">Email</label>
-                    <input id="signup-email" type="email" class="input" required />
-                </div>
-                <div class="input-group">
-                    <label for="signup-pass">Senha</label>
-                    <div class="password-field">
-                        <input id="signup-pass" type="password" class="input" required minlength="6" />
-                        <button type="button" class="show-pass-btn" aria-label="Mostrar senha">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
-                        </button>
+                    <div class="input-group">
+                        <label for="signin-pass">Senha</label>
+                        <div class="password-field">
+                            <input id="signin-pass" type="password" class="input" required />
+                            <button type="button" class="show-pass-btn" aria-label="Mostrar senha">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
                     </div>
-                </div>
-                <button type="submit" class="btn btn-primary">
-                    <span class="btn-label">Criar</span>
-                    <span class="spinner" hidden></span>
-                </button>
-            </form>
+                    <label class="checkbox"><input type="checkbox" id="remember-me" /> Lembrar de mim</label>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="btn-label">Entrar</span>
+                        <span class="spinner" hidden></span>
+                    </button>
+                </form>
+                <p class="mt"><a href="#" id="link-reset" class="link">Esqueci a senha</a></p>
+            </div>
 
-            <form id="reset-form" class="grid mt" hidden aria-busy="false">
-                <div class="input-group">
-                    <label for="reset-email">Email</label>
-                    <input id="reset-email" type="email" class="input" required />
-                </div>
-                <button type="submit" class="btn btn-primary">
-                    <span class="btn-label">Enviar</span>
-                    <span class="spinner" hidden></span>
-                </button>
-                <button type="button" id="back-to-login" class="btn btn-secondary">Voltar</button>
-            </form>
+            <div id="tab-sign" class="tab-panel" role="tabpanel" aria-labelledby="tab-signup" hidden>
+                <form id="signup-form" class="grid mt" aria-busy="false">
+                    <div class="input-group">
+                        <label for="signup-email">Email</label>
+                        <input id="signup-email" type="email" class="input" required />
+                    </div>
+                    <div class="input-group">
+                        <label for="signup-pass">Senha</label>
+                        <div class="password-field">
+                            <input id="signup-pass" type="password" class="input" required minlength="6" />
+                            <button type="button" class="show-pass-btn" aria-label="Mostrar senha">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="btn-label">Criar</span>
+                        <span class="spinner" hidden></span>
+                    </button>
+                </form>
+            </div>
 
-            <p class="mt"><a href="#" id="link-reset" class="link">Esqueci a senha</a></p>
+            <div id="tab-reset" class="tab-panel" role="tabpanel" aria-labelledby="tab-reset-btn" hidden>
+                <form id="reset-form" class="grid mt" aria-busy="false">
+                    <div class="input-group">
+                        <label for="reset-email">Email</label>
+                        <input id="reset-email" type="email" class="input" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="btn-label">Enviar</span>
+                        <span class="spinner" hidden></span>
+                    </button>
+                    <button type="button" id="back-to-login" class="btn btn-secondary">Voltar</button>
+                </form>
+            </div>
         </div>
     </div>
 
