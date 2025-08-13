@@ -1,7 +1,7 @@
 // js/views/servicosView.js
 import { getServicos, addServico, getServicoById, updateServico, deleteServico } from '../services/firestoreService.js';
 
-const appContainer = document.getElementById('app-container');
+const appContainer = document.getElementById('page-content');
 const modalPlaceholder = document.getElementById('modal-placeholder');
 let servicos = [];
 

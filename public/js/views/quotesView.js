@@ -2,7 +2,7 @@
 import { getQuotes, getQuoteById, addQuote, updateQuote, deleteQuote, createPublicQuoteSnapshot, convertQuoteToOrder } from '../services/firestoreService.js';
 import { auth } from '../firebase-config.js';
 
-const appContainer = document.getElementById('app-container');
+const appContainer = document.getElementById('page-content');
 
 export async function renderQuotesView(param) {
   if (param) return renderQuoteDetail(param);

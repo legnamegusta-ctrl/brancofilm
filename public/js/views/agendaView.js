@@ -2,7 +2,7 @@
 import { getOrders, addOrder, updateOrder, getCustomers, getCustomerById, getVehiclesForCustomer, getServicos, getVehicleById, hasScheduleConflict } from '../services/firestoreService.js';
 import { Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const appContainer = document.getElementById('app-container');
+const appContainer = document.getElementById('page-content');
 const modalPlaceholder = document.getElementById('modal-placeholder');
 let calendar;
 

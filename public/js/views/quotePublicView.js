@@ -2,7 +2,7 @@
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const db = getFirestore();
-const appContainer = document.getElementById('app-container');
+const appContainer = document.getElementById('page-content');
 
 export async function renderQuotePublicView(token) {
   const ref = doc(db, 'quotes_public', token);

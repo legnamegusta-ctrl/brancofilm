@@ -1,7 +1,7 @@
 import { t } from '../i18n.js';
 
 export function renderReportsAdvancedView() {
-  const container = document.getElementById('app-container');
+  const container = document.getElementById('page-content');
   container.innerHTML = `
     <h2>${t('reports.advanced.title')}</h2>
     <div class="tabs">

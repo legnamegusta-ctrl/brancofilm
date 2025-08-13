@@ -1,7 +1,7 @@
 import { getUsers, updateUserRole, toggleUserActive } from '../services/firestoreService.js';
 
 export async function renderUsersView() {
-  const container = document.getElementById('app-container');
+  const container = document.getElementById('page-content');
   container.innerHTML = '<h2>Usuários</h2><p class="skeleton">Carregando...</p>';
   const users = await getUsers();
   const table = document.createElement('table');

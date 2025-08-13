@@ -17,33 +17,63 @@
     </script>
 </head>
 <body>
-    <header>
-        <h1>Minha Estética</h1>
-        <nav id="main-nav" style="display:none;">
-            <a href="#dashboard">Dashboard</a>
-            <a href="#agenda">Agenda</a>
-            <a href="#kanban">Kanban</a>
-            <a href="#my-work">Minha Tarefa</a>
-            <a href="#orders">Ordens</a>
-            <a href="#orcamentos">Orçamentos</a>
-            <a href="#clientes">Clientes</a>
-            <a href="#servicos">Serviços</a>
-            <a href="#relatorios">Relatórios</a>
-            <a href="#relatorios-avancados" data-i18n="navbar.advancedReports">Relatórios Avançados</a>
-            <a href="#usuarios" class="admin-only" style="display:none;">Usuários</a>
-            <a href="#config" class="admin-only" style="display:none;">Config.</a>
-            <a href="#config/goals" class="admin-only" style="display:none;" data-i18n="navbar.goals">Metas</a>
-            <a href="#unidades" class="admin-only" style="display:none;" data-i18n="navbar.units">Unidades</a>
-            <a href="#dev/logs" class="admin-only" style="display:none;" data-i18n="navbar.logs">Logs</a>
-            <a href="#ui-kit" class="admin-only" style="display:none;">UI Kit</a>
-            <select id="unit-switcher" class="admin-only" style="display:none;"></select>
-            <span id="whoami" class="muted"></span>
+    <header id="topbar" style="display:none;">
+        <span class="brand">Minha Estética</span>
+        <input id="global-search" type="search" class="input" placeholder="Buscar cliente, placa, OS…" />
+        <button id="btn-new" class="btn btn-primary">Novo</button>
+        <div class="user-area">
+            <button id="user-btn" class="link"><span id="whoami"></span></button>
+            <div id="user-menu" class="menu hidden">
+                <button id="themeToggle" class="link" type="button">Tema</button>
+                <button id="langToggle" class="link" type="button">Lang</button>
+                <select id="unit-switcher" class="admin-only" style="display:none;"></select>
+                <button id="btnSignOut" class="link">Sair</button>
+            </div>
             <span id="net-status" class="offline-indicator" hidden>OFFLINE</span>
-            <button id="themeToggle" class="link" type="button">Tema</button>
-            <button id="langToggle" class="link" type="button">Lang</button>
-            <button id="btnSignOut" class="link">Sair</button>
-        </nav>
+        </div>
     </header>
+
+    <aside id="sidebar" style="display:none;">
+        <nav>
+            <div class="nav-group">
+                <h3>Operação</h3>
+                <a href="#dashboard" data-route="#dashboard">Dashboard</a>
+                <a href="#agenda" data-route="#agenda">Agenda</a>
+                <a href="#orders" data-route="#orders">Ordens</a>
+                <a href="#kanban" data-route="#kanban">Kanban</a>
+            </div>
+            <div class="nav-group">
+                <h3>Cadastros</h3>
+                <a href="#clientes" data-route="#clientes">Clientes</a>
+                <a href="#servicos" data-route="#servicos">Serviços</a>
+            </div>
+            <div class="nav-group">
+                <h3>Comercial</h3>
+                <a href="#orcamentos" data-route="#orcamentos">Orçamentos</a>
+            </div>
+            <div class="nav-group">
+                <h3>Análises</h3>
+                <a href="#relatorios" data-route="#relatorios">Relatórios</a>
+                <a href="#relatorios-avancados" data-route="#relatorios-avancados">Relatórios Avançados</a>
+            </div>
+            <div class="nav-group admin-only">
+                <h3>Admin</h3>
+                <a href="#usuarios" data-route="#usuarios">Usuários</a>
+                <a href="#config" data-route="#config">Configurações</a>
+                <a href="#dev/logs" data-route="#dev/logs">Logs Dev</a>
+            </div>
+        </nav>
+    </aside>
+
+    <nav id="bottom-nav" style="display:none;">
+        <a href="#dashboard" data-route="#dashboard">Dashboard</a>
+        <a href="#agenda" data-route="#agenda">Agenda</a>
+        <a href="#orders" data-route="#orders">Ordens</a>
+        <a href="#clientes" data-route="#clientes">Clientes</a>
+    </nav>
+
+    <section id="page-header" style="display:none;"></section>
+    <main id="page-content"></main>
 
     <div class="auth-shell" style="display:none;">
         <div class="auth-card">
@@ -115,8 +145,6 @@
             </div>
         </div>
     </div>
-
-    <main id="app-container"></main>
 
     <div id="modal-placeholder"></div>
 

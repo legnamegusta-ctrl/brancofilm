@@ -9,12 +9,13 @@ import {
   getCustomerById
 } from '../services/firestoreService.js';
 
-const appContainer = document.getElementById('app-container');
+const appContainer = document.getElementById('page-content');
 const customerCache = {};
 window.addEventListener('orders-changed', ()=>{ if(document.getElementById('next-list')) loadNext(); });
 
 export async function renderDashboardView() {
-  appContainer.innerHTML = `<section class="card" aria-busy="true"><h2>Dashboard</h2><div class="skeleton" style="height:2rem"></div></section>`;
+  window.setPageHeader({ title: 'Dashboard', breadcrumbs: ['Operação', 'Dashboard'] });
+  appContainer.innerHTML = `<section class="card" aria-busy="true"><div class="skeleton" style="height:2rem"></div></section>`;
   try {
     const now = new Date();
     const from30 = new Date(now.getTime() - 30*24*60*60*1000);
@@ -25,7 +26,6 @@ export async function renderDashboardView() {
     const statusCounts = await Promise.all(statusKeys.map(st => countOrders({status: st, from: from30, to: now})));
     appContainer.innerHTML = `
       <section class="card">
-        <h2>Dashboard</h2>
         <div class="grid-4 mt" id="dash-counts">
           <div class="tile">Clientes<br><strong>${cust}</strong></div>
           <div class="tile">Veículos<br><strong>${veh}</strong></div>
@@ -56,7 +56,7 @@ export async function renderDashboardView() {
     await updateFat();
     await loadNext();
   } catch (e) {
-    appContainer.innerHTML = `<section class="card"><h2>Dashboard</h2><p class="alert">Erro ao carregar.</p></section>`;
+    appContainer.innerHTML = `<section class="card"><p class="alert">Erro ao carregar.</p></section>`;
   }
 }
 

@@ -2,7 +2,7 @@ import { t } from '../i18n.js';
 import { getUnits, setDefaultUnitForAll } from '../services/firestoreService.js';
 
 export async function renderUnitsView() {
-  const container = document.getElementById('app-container');
+  const container = document.getElementById('page-content');
   container.innerHTML = `<h2>${t('units.title')}</h2><div id="units-list" class="mt"></div>`;
 
   const listEl = container.querySelector('#units-list');
