@@ -1,5 +1,6 @@
 import { auth } from './firebase-config.js';
 import { navigate } from './router.js';
+import { ensureUserDocOnLogin } from './services/firestoreService.js';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -175,8 +176,13 @@ resetForm?.addEventListener('submit', async (e) => {
 
 btnSignOut?.addEventListener('click', () => signOutUser());
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   if (user) {
+    const userDoc = await ensureUserDocOnLogin(user);
+    window.sessionState = { role: userDoc?.role || 'user' };
+    document.querySelectorAll('.admin-only').forEach(el => {
+      el.style.display = window.sessionState.role === 'admin' ? '' : 'none';
+    });
     whoami.textContent = user.email;
     nav.style.display = '';
     authShell.style.display = 'none';
@@ -185,6 +191,8 @@ onAuthStateChanged(auth, (user) => {
     }
     navigate();
   } else {
+    window.sessionState = {};
+    document.querySelectorAll('.admin-only').forEach(el => { el.style.display = 'none'; });
     whoami.textContent = '';
     nav.style.display = 'none';
     authShell.style.display = '';
