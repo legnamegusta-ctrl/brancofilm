@@ -1,6 +1,7 @@
 import { renderClientesView } from './views/clientesView.js';
 import { renderServicosView } from './views/servicosView.js';
 import { renderAgendaView } from './views/agendaView.js';
+import { renderOrdersView } from './views/ordersView.js';
 import { auth } from './firebase-config.js';
 
 const appContainer = document.getElementById('app-container');
@@ -25,6 +26,7 @@ const routes = {
   '#agenda': renderAgendaView,
   '#clientes': renderClientesView,
   '#servicos': renderServicosView,
+  '#orders': renderOrdersView,
 };
 
 export function navigate() {
