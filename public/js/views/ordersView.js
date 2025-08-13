@@ -2,10 +2,12 @@
 import {
   getOrders, getOrderById, addOrder, updateOrder, deleteOrder,
   getCustomers, getCustomerById,
-  getVehiclesForCustomer, getServicos, getUsers
+  getVehiclesForCustomer, getServicos, getUsers,
+  addPayment, listPayments, deletePayment, sumPayments,
+  saveSignature, getSignatureURL
 } from '../services/firestoreService.js';
 import { listOrderPhotos, uploadOrderPhotos, deleteOrderPhoto } from '../storageService.js';
-import { db } from '../firebase-config.js';
+import { db, auth } from '../firebase-config.js';
 import { Timestamp, collection as coll, addDoc, getDocs, query, where, orderBy, limit as limitFn } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const appContainer = document.getElementById('app-container');
@@ -166,7 +168,31 @@ async function renderOrderDetail(orderId) {
         </div>
       </form>
     </section>
-    ${!isNew?'<section class="card mt"><h3>Histórico</h3><ul id="history-list"></ul></section>':''}
+    ${!isNew?`
+      <section class="card mt"><h3>Pagamentos</h3>
+        <div id="payments-list"></div>
+        <form id="payment-form" class="grid">
+          <input type="number" step="0.01" min="0" id="payAmount" placeholder="Valor" required />
+          <select id="payMethod">
+            <option value="pix">PIX</option>
+            <option value="dinheiro">Dinheiro</option>
+            <option value="cartao">Cartão</option>
+            <option value="outro">Outro</option>
+          </select>
+          <button class="btn">Adicionar</button>
+        </form>
+        <div id="payment-totals" class="mt"></div>
+      </section>
+      <section class="card mt"><h3>Assinatura</h3>
+        <canvas id="signCanvas" width="300" height="150" style="border:1px solid #ccc;"></canvas>
+        <div class="card-actions">
+          <button type="button" id="signClear" class="btn">Limpar</button>
+          <button type="button" id="signSave" class="btn">Salvar</button>
+        </div>
+        <img id="signImg" alt="Assinatura" style="max-width:300px;display:none;" />
+      </section>
+      <section class="card mt"><h3>Histórico</h3><ul id="history-list"></ul></section>
+    `:''}
   `;
 
   document.getElementById('oCustomer').onchange = async e => {
@@ -237,7 +263,11 @@ async function renderOrderDetail(orderId) {
     form.removeAttribute('aria-busy');
     location.hash = `#orders/${newId}`;
   };
-  if (!isNew) initPhotos(orderId);
+  if (!isNew) {
+    initPhotos(orderId);
+    initPayments(orderId, order.total, order.discount || 0);
+    initSignature(orderId);
+  }
 }
 
 async function loadHistory(orderId) {
@@ -334,6 +364,57 @@ async function loadPhotos(orderId) {
     if (view) openPhotoModal(view.dataset.view);
     else if (del) { if(confirm('Excluir foto?')){ await deleteOrderPhoto(del.dataset.del); loadPhotos(orderId); } }
   };
+}
+
+async function initPayments(orderId, total = 0, discount = 0) {
+  const listEl = document.getElementById('payments-list');
+  const totalsEl = document.getElementById('payment-totals');
+  async function refresh() {
+    const pays = await listPayments(orderId);
+    listEl.innerHTML = pays.map(p=>`<div>${p.method}: R$ ${(Number(p.amount)||0).toFixed(2)} <button data-del="${p.id}" class="link">x</button></div>`).join('') || '<p class="muted">Nenhum pagamento</p>';
+    const paid = sumPayments(pays);
+    const subtotal = total;
+    const due = Math.max(0, subtotal - paid);
+    totalsEl.textContent = `Total: R$ ${subtotal.toFixed(2)} | Pago: R$ ${paid.toFixed(2)} | Em aberto: R$ ${due.toFixed(2)}`;
+  }
+  refresh();
+  listEl.onclick = async e => {
+    const del = e.target.closest('[data-del]');
+    if (del && confirm('Excluir pagamento?')) {
+      await deletePayment(orderId, del.dataset.del);
+      refresh();
+    }
+  };
+  document.getElementById('payment-form').onsubmit = async ev => {
+    ev.preventDefault();
+    const amount = Number(document.getElementById('payAmount').value)||0;
+    const method = document.getElementById('payMethod').value;
+    await addPayment(orderId, { amount, method });
+    ev.target.reset();
+    refresh();
+  };
+}
+
+function initSignature(orderId) {
+  const canvas = document.getElementById('signCanvas');
+  const ctx = canvas.getContext('2d');
+  let drawing = false;
+  canvas.addEventListener('mousedown', e=>{ drawing=true; ctx.beginPath(); ctx.moveTo(e.offsetX,e.offsetY); });
+  canvas.addEventListener('mousemove', e=>{ if(drawing){ ctx.lineTo(e.offsetX,e.offsetY); ctx.stroke(); }});
+  canvas.addEventListener('mouseup', ()=> drawing=false);
+  canvas.addEventListener('mouseleave', ()=> drawing=false);
+  document.getElementById('signClear').onclick = ()=>{ ctx.clearRect(0,0,canvas.width,canvas.height); };
+  document.getElementById('signSave').onclick = async ()=>{
+    if(!navigator.onLine){ alert('Offline'); return; }
+    canvas.toBlob(async blob=>{
+      await saveSignature(orderId, blob, { uploadedBy: auth.currentUser.uid });
+      const url = await getSignatureURL(orderId);
+      const img = document.getElementById('signImg');
+      img.src = url; img.style.display='block';
+      alert('Salvo');
+    });
+  };
+  getSignatureURL(orderId).then(url=>{ const img=document.getElementById('signImg'); img.src=url; img.style.display='block'; }).catch(()=>{});
 }
 
 function openPhotoModal(url) {
