@@ -7,18 +7,24 @@ const modalPlaceholder = document.getElementById('modal-placeholder');
 let calendar;
 
 export const renderAgendaView = async () => {
+  window.setPageHeader({
+    title: 'Agenda',
+    breadcrumbs: ['Operação', 'Agenda'],
+    filters: `
+      <div class="grid">
+        <input id="searchAgenda" placeholder="Cliente ou placa" />
+        <input type="date" id="agFrom" />
+        <input type="date" id="agTo" />
+      </div>`
+  });
   appContainer.innerHTML = `
-    <section>
-      <h2>Agenda</h2>
-      <div class="grid mt">
-        <input id="searchAgenda" placeholder="Buscar cliente/placa" />
-        <div>
-          <button class="btn" id="viewMonth">Mês</button>
-          <button class="btn" id="viewWeek">Semana</button>
-          <button class="btn" id="viewDay">Dia</button>
-        </div>
+    <section class="card">
+      <div>
+        <button class="btn" id="viewMonth">Mês</button>
+        <button class="btn" id="viewWeek">Semana</button>
+        <button class="btn" id="viewDay">Dia</button>
       </div>
-      <div id="calendar-container" class="card" style="padding:8px"></div>
+      <div id="calendar-container" style="padding:8px"></div>
       <div class="mt"><button class="btn" id="btnNewEvent">Novo agendamento</button></div>
     </section>
   `;
@@ -84,14 +90,23 @@ export const renderAgendaView = async () => {
   document.getElementById('viewWeek').onclick = ()=>calendar.changeView('timeGridWeek');
   document.getElementById('viewDay').onclick = ()=>calendar.changeView('timeGridDay');
   const search = document.getElementById('searchAgenda');
-  search.oninput = () => {
+  const fromInput = document.getElementById('agFrom');
+  const toInput = document.getElementById('agTo');
+  const applyFilters = () => {
     const t = search.value.toLowerCase();
+    const from = fromInput.value ? new Date(fromInput.value) : null;
+    const to = toInput.value ? new Date(toInput.value) : null;
     calendar.getEvents().forEach(ev => {
       const { customerName, plate } = ev.extendedProps;
-      const match = customerName.toLowerCase().includes(t) || plate.toLowerCase().includes(t);
-      ev.setProp('display', match ? 'auto' : 'none');
+      const matchText = customerName.toLowerCase().includes(t) || plate.toLowerCase().includes(t);
+      const st = ev.start;
+      const matchDate = (!from || st >= from) && (!to || st <= to);
+      ev.setProp('display', matchText && matchDate ? 'auto' : 'none');
     });
   };
+  search.oninput = applyFilters;
+  fromInput.onchange = applyFilters;
+  toInput.onchange = applyFilters;
 };
 
 async function openNewModal(start=null, end=null) {
