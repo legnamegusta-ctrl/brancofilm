@@ -1,20 +1,14 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestão Estética Automotiva</title>
-    <meta name="theme-color" id="meta-theme" content="#0f172a">
+    <meta name="theme-color" content="#F7F8FB">
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="icon" type="image/svg+xml" href="/icon.svg">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.min.css">
-    <script>
-      const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      document.documentElement.dataset.theme = theme;
-      const metaTheme = document.querySelector('#meta-theme');
-      metaTheme.setAttribute('content', getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
-    </script>
 </head>
 <body>
     <header id="topbar" style="display:none;">
@@ -31,7 +25,6 @@
         <div class="user-area">
             <button id="user-btn" class="link"><span id="whoami"></span></button>
             <div id="user-menu" class="menu hidden">
-                <button id="themeToggle" class="link" type="button">Tema</button>
                 <button id="langToggle" class="link" type="button">Lang</button>
                 <select id="unit-switcher" class="admin-only" style="display:none;"></select>
                 <button id="btnSignOut" class="link">Sair</button>
@@ -157,13 +150,6 @@
         navigator.serviceWorker.register('/service-worker.js');
         navigator.serviceWorker.register('/firebase-messaging-sw.js');
       }
-      const metaThemeEl = document.getElementById('meta-theme');
-      document.getElementById('themeToggle').addEventListener('click', () => {
-        const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-        document.documentElement.dataset.theme = t;
-        localStorage.setItem('theme', t);
-        metaThemeEl.setAttribute('content', getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
-      });
     </script>
 </body>
 </html>
