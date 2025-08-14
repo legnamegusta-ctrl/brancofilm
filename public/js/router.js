@@ -20,12 +20,12 @@ import { auth } from './firebase-config.js';
 const appContainer = document.getElementById('page-content');
 const pageHeader = document.getElementById('page-header');
 const netStatus = document.getElementById('net-status');
-const sidebarLinks = document.querySelectorAll('#sidebar a[data-route],#bottom-nav a[data-route]');
+const sidebarLinks = document.querySelectorAll('#sidebar a[data-route]');
 const globalSearch = document.getElementById('global-search');
 
 window.setPageHeader = ({ title = '', breadcrumbs = [], actions = [], filters = '' }) => {
   const crumbs = breadcrumbs.length ? `<nav class="breadcrumbs">${breadcrumbs.join(' / ')}</nav>` : '';
-  const acts = actions.map(a => `<button class="btn" id="${a.id}">${a.label}</button>`).join('');
+  const acts = actions.slice(0,2).map(a => `<button class="btn ${a.variant || 'btn-primary'}" id="${a.id}">${a.label}</button>`).join('');
   pageHeader.innerHTML = `
     ${crumbs}
     <div class="header-main">
@@ -114,9 +114,7 @@ export function navigate() {
 
   sidebarLinks.forEach(link => link.classList.remove('active'));
   const activeLink = document.querySelector(`#sidebar a[data-route="${mainPath}"]`);
-  const activeBottom = document.querySelector(`#bottom-nav a[data-route="${mainPath}"]`);
   activeLink?.classList.add('active');
-  activeBottom?.classList.add('active');
 
   const fn = routes[mainPath];
   if (typeof fn === 'function') {

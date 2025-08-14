@@ -21,26 +21,47 @@ export const renderClientesView = async (maybeId) => {
   customers = [];
   lastId = null;
 
+  setPageHeader({ title: 'Clientes' });
+
   appContainer.innerHTML = `
-    <section class="card">
-      <h2>Clientes</h2>
+    <div class="card" style="max-width:480px;margin-bottom:var(--space-6);">
       <div id="clientes-alert" class="alert" aria-live="polite"></div>
-      <form id="form-new-customer" class="grid mt" aria-busy="false">
-        <label>Nome <input id="cName" type="text" required /></label>
-        <label>Telefone <input id="cPhone" type="tel" required /></label>
-        <label>Email (opcional) <input id="cEmail" type="email" /></label>
-        <button class="btn">Adicionar</button>
+      <form id="form-new-customer" class="stack" aria-busy="false">
+        <div class="form-row">
+          <label for="cName">Nome</label>
+          <input id="cName" class="input" type="text" required />
+        </div>
+        <div class="form-row">
+          <label for="cPhone">Telefone</label>
+          <input id="cPhone" class="input" type="tel" required />
+        </div>
+        <div class="form-row">
+          <label for="cEmail">Email (opcional)</label>
+          <input id="cEmail" class="input" type="email" />
+        </div>
+        <div class="form-row" style="justify-content:flex-end;">
+          <button class="btn btn-primary">Adicionar</button>
+        </div>
       </form>
-      <div class="grid mt">
-        <input id="search" class="input" type="search" placeholder="Buscar" />
+    </div>
+
+    <div class="card" style="max-width:480px;margin-bottom:var(--space-6);">
+      <div class="form-row">
+        <div class="input-icon" style="flex:1;">
+          <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 2a8 8 0 105.293 14.293l4.707 4.707 1.414-1.414-4.707-4.707A8 8 0 0010 2zm0 2a6 6 0 110 12A6 6 0 0110 4z"/>
+          </svg>
+          <input id="search" class="input" type="search" placeholder="Buscar" />
+        </div>
         <select id="sort" class="input">
           <option value="date">Mais recentes</option>
           <option value="name">A–Z</option>
         </select>
       </div>
-      <div id="customers-list" class="mt"></div>
-      <button class="btn mt" id="load-more" hidden>Carregar mais</button>
-    </section>
+    </div>
+
+    <div id="customers-list" class="card-list"></div>
+    <button class="btn btn-secondary mt" id="load-more" hidden>Carregar mais</button>
   `;
 
   document.getElementById('form-new-customer').onsubmit = onAddCustomer;
@@ -104,15 +125,17 @@ function renderCustomerList() {
   }
 
   if (!list.length) {
-    container.innerHTML = '<p class="muted">Nenhum cliente encontrado.</p>';
+    container.innerHTML = `
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zM2 12C2 6.48 6.48 2 12 2s10 4.48 10 10-4.48 10-10 10S2 17.52 2 12zm11 5v-2h-2v2h2zm0-4V7h-2v6h2z"/></svg>
+        <p>Nenhum cliente encontrado</p>
+        <button id="empty-add" class="btn btn-primary">Adicionar cliente</button>
+      </div>`;
+    document.getElementById('empty-add').onclick = () => document.getElementById('cName').focus();
     return;
   }
 
-  container.innerHTML = `
-    <div class="grid-2">
-      ${list.map(renderCard).join('')}
-    </div>
-  `;
+  container.innerHTML = list.map(renderCard).join('');
 
   list.forEach(c => updateVehicleBadge(c.id));
   container.onclick = onListClick;
@@ -216,29 +239,34 @@ async function renderCustomerDetail(customerId) {
     return;
   }
   const vehicles = await getVehiclesForCustomer(customerId);
+  setPageHeader({ title: esc(c.name || 'Cliente'), breadcrumbs: ['<a href="#clientes">Clientes</a>', esc(c.name || 'Cliente')] });
 
   appContainer.innerHTML = `
-    <section class="card">
-      <button class="link" id="back">&larr; Voltar</button>
-      <h2>${esc(c.name || 'Cliente')}</h2>
+    <div class="card">
       <p class="muted">${esc(c.phone || '')}${c.email ? ' · ' + esc(c.email) : ''}</p>
       <div id="clientes-alert" class="alert" aria-live="polite"></div>
 
       <h3 class="mt">Veículos</h3>
-      <form id="form-vehicle" class="grid mt" aria-busy="false">
-        <label>Placa <input id="vPlate" required /></label>
-        <label>Modelo <input id="vModel" required /></label>
-        <button class="btn">Adicionar veículo</button>
+      <form id="form-vehicle" class="stack mt" aria-busy="false" style="max-width:480px;">
+        <div class="form-row">
+          <label for="vPlate">Placa</label>
+          <input id="vPlate" class="input" required />
+        </div>
+        <div class="form-row">
+          <label for="vModel">Modelo</label>
+          <input id="vModel" class="input" required />
+        </div>
+        <div class="form-row" style="justify-content:flex-end;">
+          <button class="btn btn-primary">Adicionar veículo</button>
+        </div>
       </form>
 
       <ul id="vehicles" class="list mt"></ul>
       <div class="card-actions mt">
         <button class="link" id="delCustomer">Excluir cliente</button>
       </div>
-    </section>
+    </div>
   `;
-
-  document.getElementById('back').onclick = () => { location.hash = '#clientes'; };
   document.getElementById('form-vehicle').onsubmit = async (e) => {
     e.preventDefault();
     const form = e.target;

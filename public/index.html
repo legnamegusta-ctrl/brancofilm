@@ -20,7 +20,14 @@
     <header id="topbar" style="display:none;">
         <span class="brand">Minha Estética</span>
         <input id="global-search" type="search" class="input" placeholder="Buscar cliente, placa, OS…" />
-        <button id="btn-new" class="btn btn-primary">Novo</button>
+        <div class="new-area">
+            <button id="btn-new" class="btn btn-primary">Novo</button>
+            <div id="new-menu" class="menu hidden">
+                <a href="#orders" data-route="#orders">Nova OS</a>
+                <a href="#clientes" data-route="#clientes">Novo Cliente</a>
+                <a href="#orcamentos" data-route="#orcamentos">Novo Orçamento</a>
+            </div>
+        </div>
         <div class="user-area">
             <button id="user-btn" class="link"><span id="whoami"></span></button>
             <div id="user-menu" class="menu hidden">
@@ -64,13 +71,6 @@
             </div>
         </nav>
     </aside>
-
-    <nav id="bottom-nav" style="display:none;">
-        <a href="#dashboard" data-route="#dashboard">Dashboard</a>
-        <a href="#agenda" data-route="#agenda">Agenda</a>
-        <a href="#orders" data-route="#orders">Ordens</a>
-        <a href="#clientes" data-route="#clientes">Clientes</a>
-    </nav>
 
     <section id="page-header" style="display:none;"></section>
     <main id="page-content"></main>
