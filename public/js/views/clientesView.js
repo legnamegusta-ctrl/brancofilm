@@ -28,10 +28,10 @@ export const renderClientesView = async (maybeId) => {
   });
 
   appContainer.innerHTML = `
-    <div class="card" style="max-width:640px;margin-bottom:var(--space-6);">
+    <div class="card container-md mb-lg">
       <div id="clientes-alert" class="alert" aria-live="polite"></div>
-      <form id="form-new-customer" class="grid" aria-busy="false" style="grid-template-columns:1fr 1fr;">
-        <div class="form-row" style="grid-column:1/3;">
+      <form id="form-new-customer" class="form-grid" aria-busy="false">
+        <div class="form-row full">
           <label for="cName">Nome*</label>
           <input id="cName" class="input" type="text" required />
         </div>
@@ -43,15 +43,15 @@ export const renderClientesView = async (maybeId) => {
           <label for="cEmail">Email</label>
           <input id="cEmail" class="input" type="email" />
         </div>
-        <div class="form-row" style="grid-column:1/3;display:flex;justify-content:space-between;">
-          <button type="reset" class="btn">Limpar</button>
+        <div class="form-row actions full">
+          <button type="reset" class="btn btn-ghost">Limpar</button>
           <button class="btn btn-primary">Adicionar</button>
         </div>
       </form>
     </div>
 
-    <div class="card" style="max-width:640px;margin-bottom:var(--space-6);">
-      <div class="form-row">
+    <div class="card container-md mb-lg">
+      <div class="flex gap-sm">
         <div class="input-icon" style="flex:1;">
           <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
             <path d="M10 2a8 8 0 105.293 14.293l4.707 4.707 1.414-1.414-4.707-4.707A8 8 0 0010 2zm0 2a6 6 0 110 12A6 6 0 0110 4z"/>
@@ -66,12 +66,12 @@ export const renderClientesView = async (maybeId) => {
     </div>
 
     <div class="card">
-      <table class="table compact listrada">
-        <thead style="position:sticky;top:0;background:var(--card);"><tr><th>Nome</th><th>Telefone</th><th>Email</th><th>Ações</th></tr></thead>
+      <table class="table compact listrada sticky">
+        <thead><tr><th>Nome</th><th>Telefone</th><th>Email</th><th>Ações</th></tr></thead>
         <tbody id="customers-list"></tbody>
       </table>
     </div>
-    <button class="btn btn-secondary" id="load-more" hidden style="margin:var(--space-4) auto 0;">Carregar mais</button>
+    <button class="btn btn-secondary mt-md mx-auto" id="load-more" hidden>Carregar mais</button>
   `;
 
   document.getElementById('form-new-customer').onsubmit = onAddCustomer;
@@ -136,7 +136,7 @@ function renderCustomerList() {
   }
 
   if (!list.length) {
-    container.innerHTML = `<tr><td colspan="4"><div class="empty-state"><svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zM2 12C2 6.48 6.48 2 12 2s10 4.48 10 10-4.48 10-10 10S2 17.52 2 12zm11 5v-2h-2v2h2zm0-4V7h-2v6h2z"/></svg><p>Nenhum cliente encontrado</p><button id="empty-add" class="btn btn-primary">Adicionar cliente</button></div></td></tr>`;
+    container.innerHTML = `<tr><td colspan="4"><div class="empty-state"><svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zM2 12C2 6.48 6.48 2 12 2s10 4.48 10 10-4.48 10-10 10S2 17.52 2 12zm11 5v-2h-2v2h2zm0-4V7h-2v6h2z"/></svg><p>Nenhum cliente encontrado.</p><button id="empty-add" class="btn btn-primary">Adicionar</button></div></td></tr>`;
     document.getElementById('empty-add').onclick = () => document.getElementById('cName').focus();
     return;
   }
@@ -250,7 +250,7 @@ async function renderCustomerDetail(customerId) {
       <div id="clientes-alert" class="alert" aria-live="polite"></div>
 
       <h3 class="mt">Veículos</h3>
-      <form id="form-vehicle" class="stack mt" aria-busy="false" style="max-width:480px;">
+      <form id="form-vehicle" class="form-grid mt" aria-busy="false" style="max-width:480px;">
         <div class="form-row">
           <label for="vPlate">Placa</label>
           <input id="vPlate" class="input" required />
@@ -259,7 +259,7 @@ async function renderCustomerDetail(customerId) {
           <label for="vModel">Modelo</label>
           <input id="vModel" class="input" required />
         </div>
-        <div class="form-row" style="justify-content:flex-end;">
+        <div class="form-row actions full">
           <button class="btn btn-primary">Adicionar veículo</button>
         </div>
       </form>

@@ -13,10 +13,10 @@ export const renderServicosView = async () => {
     actions: [{ id: 'header-new-servico', label: 'Novo serviço' }]
   });
   appContainer.innerHTML = `
-    <div class="card" style="max-width:520px;margin-bottom:var(--space-6);">
+    <div class="card container-sm mb-lg">
       <div id="s-alert" class="alert" aria-live="polite"></div>
-      <form id="form-servico" class="stack" aria-busy="false">
-        <div class="form-row">
+      <form id="form-servico" class="form-grid" aria-busy="false">
+        <div class="form-row full">
           <label for="sName">Nome*</label>
           <input id="sName" class="input" required />
         </div>
@@ -24,13 +24,14 @@ export const renderServicosView = async () => {
           <label for="sPrice">Preço*</label>
           <input id="sPrice" class="input" type="number" min="0" step="0.01" required />
         </div>
-        <div class="form-row" style="justify-content:flex-end;">
+        <div class="form-row actions full">
+          <button type="reset" class="btn btn-ghost">Limpar</button>
           <button class="btn btn-primary">Adicionar</button>
         </div>
       </form>
     </div>
 
-    <div class="card" style="max-width:520px;margin-bottom:var(--space-6);">
+    <div class="card container-sm mb-lg">
       <div class="input-icon">
         <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
           <path d="M10 2a8 8 0 105.293 14.293l4.707 4.707 1.414-1.414-4.707-4.707A8 8 0 0010 2zm0 2a6 6 0 110 12A6 6 0 0110 4z"/>
@@ -40,7 +41,7 @@ export const renderServicosView = async () => {
     </div>
 
     <div class="card">
-      <table class="table compact listrada">
+      <table class="table compact listrada sticky">
         <thead><tr><th>Nome</th><th>Preço</th><th></th></tr></thead>
         <tbody id="servicos-list"></tbody>
       </table>
@@ -81,7 +82,7 @@ function renderList() {
   const body = document.getElementById('servicos-list');
   const filtered = term ? servicos.filter(s => (s.name||'').toLowerCase().includes(term)) : servicos;
   if (!filtered.length) {
-    body.innerHTML = `<tr><td colspan="3"><div class="empty-state"><svg viewBox='0 0 24 24' fill='currentColor' xmlns='http://www.w3.org/2000/svg'><path d='M12 2a10 10 0 100 20 10 10 0 000-20zM2 12C2 6.48 6.48 2 12 2s10 4.48 10 10-4.48 10-10 10S2 17.52 2 12zm11 5v-2h-2v2h2zm0-4V7h-2v6h2z'/></svg><p>Nenhum serviço.</p><button id='empty-servico' class='btn btn-primary'>Adicionar serviço</button></div></td></tr>`;
+    body.innerHTML = `<tr><td colspan="3"><div class="empty-state"><svg viewBox='0 0 24 24' fill='currentColor' xmlns='http://www.w3.org/2000/svg'><path d='M12 2a10 10 0 100 20 10 10 0 000-20zM2 12C2 6.48 6.48 2 12 2s10 4.48 10 10-4.48 10-10 10S2 17.52 2 12zm11 5v-2h-2v2h2zm0-4V7h-2v6h2z'/></svg><p>Nenhum serviço encontrado.</p><button id='empty-servico' class='btn btn-primary'>Adicionar</button></div></td></tr>`;
     document.getElementById('empty-servico').onclick = () => document.getElementById('sName').focus();
     return;
   }
