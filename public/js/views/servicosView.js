@@ -7,18 +7,40 @@ let servicos = [];
 
 export const renderServicosView = async () => {
   servicos = await getServicos();
+  setPageHeader({ title: 'Serviços' });
   appContainer.innerHTML = `
-    <section class="card">
-      <h2>Serviços</h2>
+    <div class="card" style="max-width:480px;margin-bottom:var(--space-6);">
       <div id="s-alert" class="alert" aria-live="polite"></div>
-      <form id="form-servico" class="grid mt" aria-busy="false">
-        <label>Nome* <input id="sName" required /></label>
-        <label>Preço* <input id="sPrice" type="number" min="0" step="0.01" required /></label>
-        <button class="btn">Adicionar</button>
+      <form id="form-servico" class="stack" aria-busy="false">
+        <div class="form-row">
+          <label for="sName">Nome*</label>
+          <input id="sName" class="input" required />
+        </div>
+        <div class="form-row">
+          <label for="sPrice">Preço*</label>
+          <input id="sPrice" class="input" type="number" min="0" step="0.01" required />
+        </div>
+        <div class="form-row" style="justify-content:flex-end;">
+          <button class="btn btn-primary">Adicionar</button>
+        </div>
       </form>
-      <input id="sSearch" class="input mt" type="search" placeholder="Buscar por nome" />
-      <div id="servicos-list" class="mt"></div>
-    </section>
+    </div>
+
+    <div class="card" style="max-width:480px;margin-bottom:var(--space-6);">
+      <div class="input-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 2a8 8 0 105.293 14.293l4.707 4.707 1.414-1.414-4.707-4.707A8 8 0 0010 2zm0 2a6 6 0 110 12A6 6 0 0110 4z"/>
+        </svg>
+        <input id="sSearch" class="input" type="search" placeholder="Buscar por nome" />
+      </div>
+    </div>
+
+    <div class="card">
+      <table class="table compact listrada">
+        <thead><tr><th>Nome</th><th>Preço</th><th></th></tr></thead>
+        <tbody id="servicos-list"></tbody>
+      </table>
+    </div>
   `;
   document.getElementById('form-servico').onsubmit = onAddServico;
   document.getElementById('sSearch').addEventListener('input', renderList);
@@ -51,21 +73,24 @@ async function onAddServico(e) {
 
 function renderList() {
   const term = document.getElementById('sSearch').value.toLowerCase();
-  const listEl = document.getElementById('servicos-list');
+  const body = document.getElementById('servicos-list');
   const filtered = term ? servicos.filter(s => (s.name||'').toLowerCase().includes(term)) : servicos;
-  listEl.innerHTML = filtered.map(s => `
-    <div class="simple-list-item">
-      <div>
-        <strong>${esc(s.name||'-')}</strong><br/>
-        <small class="muted">R$ ${(Number(s.price)||0).toFixed(2)} • ${formatDate(s.createdAt)}</small>
-      </div>
-      <div>
-        <button class="btn btn-sm" data-edit="${s.id}">Editar</button>
+  if (!filtered.length) {
+    body.innerHTML = `<tr><td colspan="3"><div class="empty-state"><svg viewBox='0 0 24 24' fill='currentColor' xmlns='http://www.w3.org/2000/svg'><path d='M12 2a10 10 0 100 20 10 10 0 000-20zM2 12C2 6.48 6.48 2 12 2s10 4.48 10 10-4.48 10-10 10S2 17.52 2 12zm11 5v-2h-2v2h2zm0-4V7h-2v6h2z'/></svg><p>Nenhum serviço.</p><button id='empty-servico' class='btn btn-primary'>Adicionar serviço</button></div></td></tr>`;
+    document.getElementById('empty-servico').onclick = () => document.getElementById('sName').focus();
+    return;
+  }
+  body.innerHTML = filtered.map(s => `
+    <tr>
+      <td>${esc(s.name||'-')}</td>
+      <td>R$ ${(Number(s.price)||0).toFixed(2)}</td>
+      <td>
+        <button class="btn btn-secondary" data-edit="${s.id}">Editar</button>
         <button class="link" data-del="${s.id}">Excluir</button>
-      </div>
-    </div>
-  `).join('') || '<p class="muted">Nenhum serviço.</p>';
-  listEl.onclick = onListClick;
+      </td>
+    </tr>
+  `).join('');
+  body.onclick = onListClick;
 }
 
 function onListClick(e) {
