@@ -51,7 +51,7 @@ async function renderOrdersList() {
       </div>`
   });
   appContainer.innerHTML = `
-    <section class="card">
+    <section class="card container-lg">
       <table class="table compact listrada sticky mt">
         <thead><tr><th>Cliente</th><th>Status</th><th>Total</th><th>Agendado</th><th>Criado</th><th></th></tr></thead>
         <tbody id="orders-body"></tbody>

@@ -13,7 +13,7 @@ export const renderServicosView = async () => {
     actions: [{ id: 'header-new-servico', label: 'Novo serviço' }]
   });
   appContainer.innerHTML = `
-    <div class="card container-sm mb-lg">
+    <div class="card container-sm mb-md">
       <div id="s-alert" class="alert" aria-live="polite"></div>
       <form id="form-servico" class="form-grid" aria-busy="false">
         <div class="form-row full">
@@ -31,7 +31,7 @@ export const renderServicosView = async () => {
       </form>
     </div>
 
-    <div class="card container-sm mb-lg">
+    <div class="card container-sm mb-md">
       <div class="input-icon">
         <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
           <path d="M10 2a8 8 0 105.293 14.293l4.707 4.707 1.414-1.414-4.707-4.707A8 8 0 0010 2zm0 2a6 6 0 110 12A6 6 0 0110 4z"/>
