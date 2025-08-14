@@ -52,7 +52,7 @@ async function renderOrdersList() {
   });
   appContainer.innerHTML = `
     <section class="card">
-      <table class="mt simple-table">
+      <table class="table compact listrada sticky mt">
         <thead><tr><th>Cliente</th><th>Status</th><th>Total</th><th>Agendado</th><th>Criado</th><th></th></tr></thead>
         <tbody id="orders-body"></tbody>
       </table>
@@ -124,10 +124,15 @@ async function renderOrderDetail(orderId) {
   }
 
   const itemsSet = new Set(order?.items?.map(i => i.servicoId));
+  window.setPageHeader({
+    title: isNew ? 'Nova OS' : 'Ordem',
+    breadcrumbs: ['Operação', '<a href="#orders">Ordens</a>', isNew ? 'Nova' : orderId]
+  });
   appContainer.innerHTML = `
-    <section class="card print-card">
-      <h2>${isNew ? 'Nova' : 'Editar'} Ordem de Serviço</h2>
-      <form id="order-form" class="grid" aria-busy="false">
+    <div class="grid-2">
+      <div id="order-sections">
+        <section class="card print-card">
+          <form id="order-form" class="grid" aria-busy="false">
         <label>Cliente*
           <select id="oCustomer" required>
             <option value="">—</option>
@@ -170,10 +175,10 @@ async function renderOrderDetail(orderId) {
           ${!isNew?'<button type="button" id="oPrint" class="link no-print">Imprimir</button>':''}
           ${!isNew?'<button type="button" id="oCSV" class="link">CSV</button>':''}
         </div>
-      </form>
-    </section>
-    ${!isNew?`
-      <section class="card mt"><h3>Pagamentos</h3>
+          </form>
+        </section>
+        ${!isNew?`
+      <section class="card mt no-print"><h3>Pagamentos</h3>
         <div id="payments-list"></div>
         <form id="payment-form" class="grid">
           <input type="number" step="0.01" min="0" id="payAmount" placeholder="Valor" required />
@@ -187,7 +192,7 @@ async function renderOrderDetail(orderId) {
         </form>
         <div id="payment-totals" class="mt"></div>
       </section>
-      <section class="card mt"><h3>Assinatura</h3>
+      <section class="card mt no-print"><h3>Assinatura</h3>
         <canvas id="signCanvas" width="300" height="150" style="border:1px solid #ccc;"></canvas>
         <div class="card-actions">
           <button type="button" id="signClear" class="btn">Limpar</button>
@@ -195,8 +200,19 @@ async function renderOrderDetail(orderId) {
         </div>
         <img id="signImg" alt="Assinatura" style="max-width:300px;display:none;" />
       </section>
-      <section class="card mt"><h3>Histórico</h3><ul id="history-list"></ul></section>
-    `:''}
+      <section class="card mt no-print"><h3>Histórico</h3><ul id="history-list"></ul></section>
+      `:''}
+      </div>
+      <aside class="card" id="order-summary">
+        <h3>Resumo</h3>
+        <dl>
+          <dt>Subtotal</dt><dd id="sum-subtotal">R$ 0,00</dd>
+          <dt>Desconto</dt><dd id="sum-discount">R$ 0,00</dd>
+          <dt>Pago</dt><dd id="sum-paid">R$ 0,00</dd>
+          <dt>Aberto</dt><dd id="sum-open">R$ 0,00</dd>
+        </dl>
+      </aside>
+    </div>
   `;
 
   document.getElementById('oCustomer').onchange = async e => {
@@ -269,7 +285,7 @@ async function renderOrderDetail(orderId) {
   };
   if (!isNew) {
     initPhotos(orderId);
-    initPayments(orderId, order.total, order.discount || 0);
+    initPayments(orderId);
     initSignature(orderId);
   }
 }
@@ -292,12 +308,26 @@ async function loadHistory(orderId) {
   }).join('') || '<li class="muted">Sem histórico</li>';
 }
 
+const summary = { subtotal:0, discount:0, paid:0 };
+function updateSummaryDisplay() {
+  const open = Math.max(0, summary.subtotal - summary.discount - summary.paid);
+  const ss = document.getElementById('sum-subtotal');
+  if (!ss) return;
+  ss.textContent = 'R$ ' + summary.subtotal.toFixed(2);
+  document.getElementById('sum-discount').textContent = 'R$ ' + summary.discount.toFixed(2);
+  document.getElementById('sum-paid').textContent = 'R$ ' + summary.paid.toFixed(2);
+  document.getElementById('sum-open').textContent = 'R$ ' + open.toFixed(2);
+}
+
 function calcTotal() {
   const items = Array.from(document.querySelectorAll('#oServices input:checked')).map(i => Number(i.dataset.price));
   const discount = Number(document.getElementById('oDiscount').value)||0;
   const subtotal = items.reduce((s,v)=>s+v,0);
   const total = Math.max(0, subtotal - discount);
+  summary.subtotal = subtotal;
+  summary.discount = discount;
   document.getElementById('oTotal').textContent = 'R$ ' + total.toFixed(2);
+  updateSummaryDisplay();
 }
 
 function exportCSV(id, order) {
@@ -370,16 +400,18 @@ async function loadPhotos(orderId) {
   };
 }
 
-async function initPayments(orderId, total = 0, discount = 0) {
+async function initPayments(orderId) {
   const listEl = document.getElementById('payments-list');
   const totalsEl = document.getElementById('payment-totals');
   async function refresh() {
     const pays = await listPayments(orderId);
     listEl.innerHTML = pays.map(p=>`<div>${p.method}: R$ ${(Number(p.amount)||0).toFixed(2)} <button data-del="${p.id}" class="link">x</button></div>`).join('') || '<p class="muted">Nenhum pagamento</p>';
     const paid = sumPayments(pays);
-    const subtotal = total;
+    summary.paid = paid;
+    const subtotal = summary.subtotal - summary.discount;
     const due = Math.max(0, subtotal - paid);
     totalsEl.textContent = `Total: R$ ${subtotal.toFixed(2)} | Pago: R$ ${paid.toFixed(2)} | Em aberto: R$ ${due.toFixed(2)}`;
+    updateSummaryDisplay();
   }
   refresh();
   listEl.onclick = async e => {
