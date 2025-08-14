@@ -21,6 +21,9 @@ const appContainer = document.getElementById('page-content');
 const pageHeader = document.getElementById('page-header');
 const netStatus = document.getElementById('net-status');
 const sidebarLinks = document.querySelectorAll('#sidebar a[data-route]');
+const tabbarLinks = document.querySelectorAll('#tabbar a[data-route]');
+const tabbar = document.getElementById('tabbar');
+const fabNew = document.getElementById('fab-new');
 const globalSearch = document.getElementById('global-search');
 
 window.setPageHeader = ({ title = '', breadcrumbs = [], actions = [], filters = '' }) => {
@@ -86,6 +89,14 @@ export function navigate() {
   pageHeader.style.display = 'none';
   pageHeader.innerHTML = '';
 
+  if (hash === '#login') {
+    tabbar?.style.setProperty('display', 'none');
+    fabNew?.style.setProperty('display', 'none');
+  } else {
+    tabbar?.style.removeProperty('display');
+    fabNew?.style.removeProperty('display');
+  }
+
   if (!auth.currentUser && hash !== '#login' && !hash.startsWith('#q/')) {
     location.hash = '#login';
     return;
@@ -113,8 +124,11 @@ export function navigate() {
   }
 
   sidebarLinks.forEach(link => link.classList.remove('active'));
+  tabbarLinks.forEach(link => link.classList.remove('active'));
   const activeLink = document.querySelector(`#sidebar a[data-route="${mainPath}"]`);
   activeLink?.classList.add('active');
+  const activeTab = document.querySelector(`#tabbar a[data-route="${mainPath}"]`);
+  activeTab?.classList.add('active');
 
   const fn = routes[mainPath];
   if (typeof fn === 'function') {
