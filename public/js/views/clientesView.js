@@ -21,37 +21,42 @@ export const renderClientesView = async (maybeId) => {
   customers = [];
   lastId = null;
 
-  setPageHeader({ title: 'Clientes' });
+  setPageHeader({
+    title: 'Clientes',
+    breadcrumbs: ['Cadastros', 'Clientes'],
+    actions: [{ id: 'header-new-customer', label: 'Novo cliente' }]
+  });
 
   appContainer.innerHTML = `
-    <div class="card" style="max-width:480px;margin-bottom:var(--space-6);">
+    <div class="card" style="max-width:640px;margin-bottom:var(--space-6);">
       <div id="clientes-alert" class="alert" aria-live="polite"></div>
-      <form id="form-new-customer" class="stack" aria-busy="false">
-        <div class="form-row">
-          <label for="cName">Nome</label>
+      <form id="form-new-customer" class="grid" aria-busy="false" style="grid-template-columns:1fr 1fr;">
+        <div class="form-row" style="grid-column:1/3;">
+          <label for="cName">Nome*</label>
           <input id="cName" class="input" type="text" required />
         </div>
         <div class="form-row">
-          <label for="cPhone">Telefone</label>
+          <label for="cPhone">Telefone*</label>
           <input id="cPhone" class="input" type="tel" required />
         </div>
         <div class="form-row">
-          <label for="cEmail">Email (opcional)</label>
+          <label for="cEmail">Email</label>
           <input id="cEmail" class="input" type="email" />
         </div>
-        <div class="form-row" style="justify-content:flex-end;">
+        <div class="form-row" style="grid-column:1/3;display:flex;justify-content:space-between;">
+          <button type="reset" class="btn">Limpar</button>
           <button class="btn btn-primary">Adicionar</button>
         </div>
       </form>
     </div>
 
-    <div class="card" style="max-width:480px;margin-bottom:var(--space-6);">
+    <div class="card" style="max-width:640px;margin-bottom:var(--space-6);">
       <div class="form-row">
         <div class="input-icon" style="flex:1;">
           <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
             <path d="M10 2a8 8 0 105.293 14.293l4.707 4.707 1.414-1.414-4.707-4.707A8 8 0 0010 2zm0 2a6 6 0 110 12A6 6 0 0110 4z"/>
           </svg>
-          <input id="search" class="input" type="search" placeholder="Buscar" />
+          <input id="search" class="input" type="search" placeholder="Buscar por nome, telefone ou email…" />
         </div>
         <select id="sort" class="input">
           <option value="date">Mais recentes</option>
@@ -60,14 +65,20 @@ export const renderClientesView = async (maybeId) => {
       </div>
     </div>
 
-    <div id="customers-list" class="card-list"></div>
-    <button class="btn btn-secondary mt" id="load-more" hidden>Carregar mais</button>
+    <div class="card">
+      <table class="table compact listrada">
+        <thead style="position:sticky;top:0;background:var(--card);"><tr><th>Nome</th><th>Telefone</th><th>Email</th><th>Ações</th></tr></thead>
+        <tbody id="customers-list"></tbody>
+      </table>
+    </div>
+    <button class="btn btn-secondary" id="load-more" hidden style="margin:var(--space-4) auto 0;">Carregar mais</button>
   `;
 
   document.getElementById('form-new-customer').onsubmit = onAddCustomer;
   document.getElementById('search').addEventListener('input', renderCustomerList);
   document.getElementById('sort').addEventListener('change', renderCustomerList);
   document.getElementById('load-more').onclick = () => loadCustomers();
+  document.getElementById('header-new-customer').onclick = () => document.getElementById('cName').focus();
 
   await loadCustomers(true);
 };
@@ -125,12 +136,7 @@ function renderCustomerList() {
   }
 
   if (!list.length) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zM2 12C2 6.48 6.48 2 12 2s10 4.48 10 10-4.48 10-10 10S2 17.52 2 12zm11 5v-2h-2v2h2zm0-4V7h-2v6h2z"/></svg>
-        <p>Nenhum cliente encontrado</p>
-        <button id="empty-add" class="btn btn-primary">Adicionar cliente</button>
-      </div>`;
+    container.innerHTML = `<tr><td colspan="4"><div class="empty-state"><svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zM2 12C2 6.48 6.48 2 12 2s10 4.48 10 10-4.48 10-10 10S2 17.52 2 12zm11 5v-2h-2v2h2zm0-4V7h-2v6h2z"/></svg><p>Nenhum cliente encontrado</p><button id="empty-add" class="btn btn-primary">Adicionar cliente</button></div></td></tr>`;
     document.getElementById('empty-add').onclick = () => document.getElementById('cName').focus();
     return;
   }
@@ -143,21 +149,16 @@ function renderCustomerList() {
 
 function renderCard(c) {
   return `
-    <div class="card" data-id="${c.id}">
-      <div class="card-header flex between">
-        <span>${esc(c.name || '-')}</span>
-        <span class="badge" data-badge="${c.id}">0</span>
-      </div>
-      <div class="card-body">
-        <p><b>Telefone:</b> ${esc(c.phone || '-')}</p>
-        <p><b>Email:</b> ${esc(c.email || '-')}</p>
-      </div>
-      <div class="card-actions">
+    <tr data-id="${c.id}">
+      <td>${esc(c.name || '-')} <span class="badge" data-badge="${c.id}">0</span></td>
+      <td>${esc(c.phone || '-')}</td>
+      <td>${esc(c.email || '-')}</td>
+      <td>
         <button class="btn" data-act="open" data-id="${c.id}">Abrir</button>
         <button class="link" data-act="edit" data-id="${c.id}">Editar</button>
         <button class="link" data-act="del" data-id="${c.id}">Excluir</button>
-      </div>
-    </div>
+      </td>
+    </tr>
   `;
 }
 
@@ -193,22 +194,24 @@ async function onListClick(e) {
 }
 
 function showEditForm(id) {
-  const card = document.querySelector(`[data-id="${id}"]`);
+  const row = document.querySelector(`tr[data-id="${id}"]`);
   const c = customers.find(x => x.id === id);
-  if (!card || !c) return;
-  card.innerHTML = `
-    <form class="grid" data-edit="${id}" aria-busy="false">
-      <label>Nome <input id="eName-${id}" value="${attr(c.name)}" required /></label>
-      <label>Telefone <input id="ePhone-${id}" value="${attr(c.phone)}" required /></label>
-      <label>Email <input id="eEmail-${id}" value="${attr(c.email || '')}" type="email" /></label>
-      <div class="card-actions">
-        <button class="btn">Salvar</button>
-        <button type="button" class="link" data-cancel="${id}">Cancelar</button>
-      </div>
-    </form>
+  if (!row || !c) return;
+  row.innerHTML = `
+    <td colspan="4">
+      <form class="grid" data-edit="${id}" aria-busy="false">
+        <label>Nome <input id="eName-${id}" value="${attr(c.name)}" required /></label>
+        <label>Telefone <input id="ePhone-${id}" value="${attr(c.phone)}" required /></label>
+        <label>Email <input id="eEmail-${id}" value="${attr(c.email || '')}" type="email" /></label>
+        <div class="card-actions">
+          <button class="btn">Salvar</button>
+          <button type="button" class="link" data-cancel="${id}">Cancelar</button>
+        </div>
+      </form>
+    </td>
   `;
 
-  const form = card.querySelector('form');
+  const form = row.querySelector('form');
   form.onsubmit = async (e) => {
     e.preventDefault();
     const data = {
@@ -229,7 +232,7 @@ function showEditForm(id) {
     }
   };
   form.querySelector('[data-cancel]')?.addEventListener('click', renderCustomerList);
-  card.querySelector('input')?.focus();
+  row.querySelector('input')?.focus();
 }
 
 async function renderCustomerDetail(customerId) {

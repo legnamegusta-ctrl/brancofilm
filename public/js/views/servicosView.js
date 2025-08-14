@@ -7,9 +7,13 @@ let servicos = [];
 
 export const renderServicosView = async () => {
   servicos = await getServicos();
-  setPageHeader({ title: 'Serviços' });
+  setPageHeader({
+    title: 'Serviços',
+    breadcrumbs: ['Cadastros', 'Serviços'],
+    actions: [{ id: 'header-new-servico', label: 'Novo serviço' }]
+  });
   appContainer.innerHTML = `
-    <div class="card" style="max-width:480px;margin-bottom:var(--space-6);">
+    <div class="card" style="max-width:520px;margin-bottom:var(--space-6);">
       <div id="s-alert" class="alert" aria-live="polite"></div>
       <form id="form-servico" class="stack" aria-busy="false">
         <div class="form-row">
@@ -26,7 +30,7 @@ export const renderServicosView = async () => {
       </form>
     </div>
 
-    <div class="card" style="max-width:480px;margin-bottom:var(--space-6);">
+    <div class="card" style="max-width:520px;margin-bottom:var(--space-6);">
       <div class="input-icon">
         <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
           <path d="M10 2a8 8 0 105.293 14.293l4.707 4.707 1.414-1.414-4.707-4.707A8 8 0 0010 2zm0 2a6 6 0 110 12A6 6 0 0110 4z"/>
@@ -44,6 +48,7 @@ export const renderServicosView = async () => {
   `;
   document.getElementById('form-servico').onsubmit = onAddServico;
   document.getElementById('sSearch').addEventListener('input', renderList);
+  document.getElementById('header-new-servico').onclick = () => document.getElementById('sName').focus();
   renderList();
 };
 
