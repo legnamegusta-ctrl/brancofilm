@@ -2,7 +2,6 @@
 import { getOrders, addOrder, updateOrder, getCustomers, getCustomerById, getVehiclesForCustomer, getServicos, getVehicleById, hasScheduleConflict } from '../services/firestoreService.js';
 import { Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const appContainer = document.getElementById('page-content');
 const modalPlaceholder = document.getElementById('modal-placeholder');
 let calendar;
 
@@ -17,38 +16,38 @@ export const renderAgendaView = async () => {
         <input type="date" id="agTo" />
       </div>`
   });
-  appContainer.innerHTML = `
-    <section class="card container-lg">
-      <div>
-        <button class="btn" id="viewMonth">Mês</button>
-        <button class="btn" id="viewWeek">Semana</button>
-        <button class="btn" id="viewDay">Dia</button>
-      </div>
-      <div id="calendar-container" style="padding:8px"></div>
-      <div class="mt"><button class="btn" id="btnNewEvent">Novo agendamento</button></div>
-    </section>
-  `;
-  const orders = await getOrders();
-  const customers = {};
-  const vehicles = {};
-  for (const o of orders) {
-    if (!customers[o.customerId]) {
-      customers[o.customerId] = (await getCustomerById(o.customerId))?.name || '';
+  const root = document.getElementById('page-content');
+  root.innerHTML = '<div id="calendar"></div>';
+  const calendarEl = document.getElementById('calendar');
+
+  let events = [];
+  try {
+    const orders = await getOrders();
+    const customers = {};
+    const vehicles = {};
+    for (const o of orders) {
+      if (!customers[o.customerId]) {
+        customers[o.customerId] = (await getCustomerById(o.customerId))?.name || '';
+      }
+      if (o.vehicleId && !vehicles[o.vehicleId]) {
+        vehicles[o.vehicleId] = (await getVehicleById(o.vehicleId))?.plate || '';
+      }
     }
-    if (o.vehicleId && !vehicles[o.vehicleId]) {
-      vehicles[o.vehicleId] = (await getVehicleById(o.vehicleId))?.plate || '';
-    }
+    events = orders.filter(o=>o.scheduledStart).map(o => ({
+      id: o.id,
+      title: `${customers[o.customerId] || ''} - ${vehicles[o.vehicleId] || ''}`,
+      start: o.scheduledStart.seconds ? new Date(o.scheduledStart.seconds*1000) : o.scheduledStart,
+      end: o.scheduledEnd?.seconds ? new Date(o.scheduledEnd.seconds*1000) : (o.scheduledEnd || null),
+      classNames: [o.status],
+      extendedProps: { customerId: o.customerId, vehicleId: o.vehicleId, customerName: customers[o.customerId]||'', plate: vehicles[o.vehicleId]||'' }
+    }));
+  } catch(err) {
+    console.error(err);
   }
-  const events = orders.filter(o=>o.scheduledStart).map(o => ({
-    id: o.id,
-    title: `${customers[o.customerId] || ''} - ${vehicles[o.vehicleId] || ''}`,
-    start: o.scheduledStart.seconds ? new Date(o.scheduledStart.seconds*1000) : o.scheduledStart,
-    end: o.scheduledEnd?.seconds ? new Date(o.scheduledEnd.seconds*1000) : (o.scheduledEnd || null),
-    classNames: [o.status],
-    extendedProps: { customerId: o.customerId, vehicleId: o.vehicleId, customerName: customers[o.customerId]||'', plate: vehicles[o.vehicleId]||'' }
-  }));
-  const { Calendar } = window;
-  calendar = new Calendar(document.getElementById('calendar-container'), {
+
+  const FC = window.FullCalendar;
+  if (!FC || !FC.Calendar) throw new Error('FullCalendar não carregado — verifique CDNs e ordem dos scripts.');
+  calendar = new FC.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
     selectable: true,
     height: 'auto',
@@ -85,10 +84,6 @@ export const renderAgendaView = async () => {
     }
   });
   calendar.render();
-  document.getElementById('btnNewEvent').onclick = () => openNewModal();
-  document.getElementById('viewMonth').onclick = ()=>calendar.changeView('dayGridMonth');
-  document.getElementById('viewWeek').onclick = ()=>calendar.changeView('timeGridWeek');
-  document.getElementById('viewDay').onclick = ()=>calendar.changeView('timeGridDay');
   const search = document.getElementById('searchAgenda');
   const fromInput = document.getElementById('agFrom');
   const toInput = document.getElementById('agTo');
