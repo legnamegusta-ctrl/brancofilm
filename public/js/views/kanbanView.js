@@ -7,7 +7,7 @@ const appContainer = document.getElementById('page-content');
 export async function renderKanbanView() {
   window.setPageHeader({ title: 'Kanban', breadcrumbs: ['Operação', 'Kanban'] });
   appContainer.innerHTML = `
-    <section class="card">
+    <section class="card container-lg">
       <div id="kanban-board" class="kanban-board"></div>
     </section>
   `;

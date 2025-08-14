@@ -5,11 +5,13 @@ export async function renderReportsView() {
   window.setPageHeader({ title: 'Relatórios', breadcrumbs: ['Operação', 'Relatórios'] });
   const container = document.getElementById('page-content');
   container.innerHTML = `
-    <nav class="tabs">
-      <button id="tab-fin" class="tab active">Financeiro</button>
-      <button id="tab-op" class="tab">Operacional</button>
-    </nav>
-    <section id="report-content" aria-live="polite" class="mt"></section>
+    <section class="card container-lg">
+      <nav class="tabs">
+        <button id="tab-fin" class="tab active">Financeiro</button>
+        <button id="tab-op" class="tab">Operacional</button>
+      </nav>
+      <section id="report-content" aria-live="polite" class="mt"></section>
+    </section>
   `;
 
   const finBtn = document.getElementById('tab-fin');

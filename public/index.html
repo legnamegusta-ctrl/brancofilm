@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.min.css">
 </head>
 <body>
-    <header id="topbar" style="display:none;">
+    <header id="topbar" class="topbar hidden">
         <span class="brand">Minha Estética</span>
         <input id="global-search" type="search" class="input" placeholder="Buscar cliente, placa, OS…" />
         <div class="new-area">
@@ -32,7 +32,7 @@
         </div>
     </header>
 
-    <aside id="sidebar" style="display:none;">
+    <aside id="sidebar" class="sidebar hidden">
         <nav>
             <div class="nav-group">
                 <h3>Operação</h3>
@@ -64,10 +64,10 @@
         </nav>
     </aside>
 
-    <section id="page-header" style="display:none;"></section>
-    <main id="page-content"></main>
+    <section id="page-header" class="page-header hidden"></section>
+    <main id="page-content" class="main"></main>
 
-    <div class="auth-shell" style="display:none;">
+    <div class="auth-shell hidden">
         <div class="auth-card">
             <div class="tabs">
                 <button id="tab-signin" class="tab-btn" role="tab" aria-selected="true" data-target="#tab-login" aria-controls="tab-login">Entrar</button>

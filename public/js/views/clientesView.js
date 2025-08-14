@@ -28,7 +28,7 @@ export const renderClientesView = async (maybeId) => {
   });
 
   appContainer.innerHTML = `
-    <div class="card container-md mb-lg">
+    <div class="card container-md mb-md">
       <div id="clientes-alert" class="alert" aria-live="polite"></div>
       <form id="form-new-customer" class="form-grid" aria-busy="false">
         <div class="form-row full">
@@ -50,7 +50,7 @@ export const renderClientesView = async (maybeId) => {
       </form>
     </div>
 
-    <div class="card container-md mb-lg">
+    <div class="card container-md mb-md">
       <div class="flex gap-sm">
         <div class="input-icon" style="flex:1;">
           <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">

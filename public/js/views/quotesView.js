@@ -7,7 +7,7 @@ const appContainer = document.getElementById('page-content');
 export async function renderQuotesView(param) {
   if (param) return renderQuoteDetail(param);
   const list = await getQuotes();
-  appContainer.innerHTML = `<section class="card"><h2>Orçamentos</h2><button id="btnNewQuote" class="btn">Novo</button><ul id="quotes-list"></ul></section>`;
+  appContainer.innerHTML = `<section class="card container-md"><h2>Orçamentos</h2><button id="btnNewQuote" class="btn btn-primary">Novo</button><ul id="quotes-list"></ul></section>`;
   const ul = document.getElementById('quotes-list');
   ul.innerHTML = list.map(q=>`<li><a href="#orcamentos/${q.id}">${q.id}</a> - ${q.status}</li>`).join('') || '<li class="muted">Nenhum orçamento</li>';
   document.getElementById('btnNewQuote').onclick = () => location.hash = '#orcamentos/new';
@@ -18,7 +18,7 @@ async function renderQuoteDetail(id) {
   const quote = isNew ? { items:[] } : await getQuoteById(id);
   if (!quote) { appContainer.innerHTML = '<p class="muted">Não encontrado</p>'; return; }
   appContainer.innerHTML = `
-    <section class="card">
+    <section class="card container-md">
       <h2>${isNew?'Novo':'Editar'} Orçamento</h2>
       <form id="quote-form" class="grid">
         <label>Cliente <input id="qCustomer" value="${quote.customerId||''}" /></label>
@@ -30,10 +30,10 @@ async function renderQuoteDetail(id) {
           </select>
         </label>
         <div class="card-actions">
-          <button class="btn">Salvar</button>
+          <button class="btn btn-primary">Salvar</button>
           ${!isNew?'<button type="button" id="btnDel" class="btn btn-danger">Excluir</button>':''}
-          ${!isNew?'<button type="button" id="btnPub" class="btn">Gerar link público</button>':''}
-          ${!isNew?'<button type="button" id="btnConv" class="btn">Converter em OS</button>':''}
+          ${!isNew?'<button type="button" id="btnPub" class="btn btn-secondary">Gerar link público</button>':''}
+          ${!isNew?'<button type="button" id="btnConv" class="btn btn-secondary">Converter em OS</button>':''}
         </div>
       </form>
     </section>

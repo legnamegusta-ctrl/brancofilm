@@ -18,7 +18,7 @@ export const renderAgendaView = async () => {
       </div>`
   });
   appContainer.innerHTML = `
-    <section class="card">
+    <section class="card container-lg">
       <div>
         <button class="btn" id="viewMonth">Mês</button>
         <button class="btn" id="viewWeek">Semana</button>
