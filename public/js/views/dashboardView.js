@@ -1,86 +1,64 @@
 // js/views/dashboardView.js
 import {
   countCustomers,
-  countVehicles,
-  countServices,
   countOrders,
   sumOrdersTotal,
   getNextSchedules,
   getCustomerById
 } from '../services/firestoreService.js';
 
-const appContainer = document.getElementById('page-content');
 const customerCache = {};
-window.addEventListener('orders-changed', ()=>{ if(document.getElementById('next-list')) loadNext(); });
 
 export async function renderDashboardView() {
-  window.setPageHeader({ title: 'Dashboard', breadcrumbs: ['Operação', 'Dashboard'] });
-  appContainer.innerHTML = `<section class="card" aria-busy="true"><div class="skeleton" style="height:2rem"></div></section>`;
+  const root = document.getElementById('page-content');
+  if (!root) throw new Error('#page-content não encontrado');
+  root.innerHTML = `
+  <section class="mobile container">
+    <header class="page-header">
+      <h1>Dashboard</h1>
+    </header>
+    <div class="kpi-grid">
+      <div class="kpi-card"><span class="kpi-title">OS Abertas</span><span class="kpi-value">--</span></div>
+      <div class="kpi-card"><span class="kpi-title">Hoje</span><span class="kpi-value">--</span></div>
+      <div class="kpi-card"><span class="kpi-title">Faturamento</span><span class="kpi-value">--</span></div>
+      <div class="kpi-card"><span class="kpi-title">Clientes</span><span class="kpi-value">--</span></div>
+    </div>
+    <div id="dash-recent"></div>
+  </section>`;
+
   try {
     const now = new Date();
-    const from30 = new Date(now.getTime() - 30*24*60*60*1000);
-    const [cust, veh, serv, ord] = await Promise.all([
-      countCustomers(), countVehicles(), countServices(), countOrders()
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const end = new Date(start.getTime() + 24*60*60*1000);
+    const [openOrders, todayOrders, revenue, clients] = await Promise.all([
+      countOrders({ status: 'novo' }),
+      countOrders({ from: start, to: end }),
+      sumOrdersTotal({ from: start, to: end }),
+      countCustomers()
     ]);
-    const statusKeys = ['novo','em_andamento','concluido','cancelado'];
-    const statusCounts = await Promise.all(statusKeys.map(st => countOrders({status: st, from: from30, to: now})));
-    appContainer.innerHTML = `
-      <section class="card">
-        <div class="grid-4 mt" id="dash-counts">
-          <div class="tile">Clientes<br><strong>${cust}</strong></div>
-          <div class="tile">Veículos<br><strong>${veh}</strong></div>
-          <div class="tile">Serviços<br><strong>${serv}</strong></div>
-          <div class="tile">Ordens<br><strong>${ord}</strong></div>
-        </div>
-        <div class="mt">
-          <h3>Ordens nos últimos 30 dias</h3>
-          <div class="chips">
-            ${statusKeys.map((st,i)=>`<span class="badge">${st}: ${statusCounts[i]}</span>`).join(' ')}
-          </div>
-        </div>
-        <div class="mt">
-          <h3>Faturamento estimado</h3>
-          <select id="fat-period">
-            <option value="7">7 dias</option>
-            <option value="30" selected>30 dias</option>
-            <option value="90">90 dias</option>
-          </select>
-          <span id="fat-value" class="ml">-</span>
-        </div>
-        <div class="mt">
-          <h3>Próximos agendamentos</h3>
-          <ul id="next-list" class="mt"></ul>
-        </div>
-      </section>`;
-    document.getElementById('fat-period').onchange = updateFat;
-    await updateFat();
-    await loadNext();
-  } catch (e) {
-    appContainer.innerHTML = `<section class="card"><p class="alert">Erro ao carregar.</p></section>`;
-  }
-}
+    const kpis = root.querySelectorAll('.kpi-card .kpi-value');
+    kpis[0].textContent = openOrders;
+    kpis[1].textContent = todayOrders;
+    kpis[2].textContent = formatBRL(revenue);
+    kpis[3].textContent = clients;
 
-async function updateFat() {
-  const sel = document.getElementById('fat-period');
-  const days = Number(sel.value);
-  const now = new Date();
-  const from = new Date(now.getTime() - days*24*60*60*1000);
-  const val = await sumOrdersTotal({ from, to: now });
-  document.getElementById('fat-value').textContent = formatBRL(val);
-}
-
-async function loadNext() {
-  const list = document.getElementById('next-list');
-  const orders = await getNextSchedules(5);
-  if (!orders.length) { list.innerHTML = '<li class="muted">Nenhum agendamento</li>'; return; }
-  const items = [];
-  for (const o of orders) {
-    if (!customerCache[o.customerId]) {
-      customerCache[o.customerId] = (await getCustomerById(o.customerId))?.name || '-';
+    const recent = await getNextSchedules(5);
+    const dashRecent = document.getElementById('dash-recent');
+    if (recent.length) {
+      const items = [];
+      for (const o of recent) {
+        if (!customerCache[o.customerId]) {
+          customerCache[o.customerId] = (await getCustomerById(o.customerId))?.name || '-';
+        }
+        items.push(`<div><a href="#orders/${o.id}">${esc(customerCache[o.customerId])} - ${esc(o.vehicleId)} - ${formatDate(o.scheduledStart)}</a></div>`);
+      }
+      dashRecent.innerHTML = items.join('');
+    } else {
+      dashRecent.innerHTML = '<p class="muted">Nenhum agendamento</p>';
     }
-    items.push(`<li><a href="#orders/${o.id}">${esc(customerCache[o.customerId])} - ${esc(o.vehicleId)} - ${formatDate(o.scheduledStart)}</a></li>`);
+  } catch (e) {
+    console.error(e);
   }
-  list.innerHTML = items.join('');
 }
 
 const formatBRL = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
