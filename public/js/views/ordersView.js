@@ -41,50 +41,32 @@ async function renderOrdersList() {
   window.setPageHeader({
     title: 'Ordens',
     breadcrumbs: ['Operação', 'Ordens'],
-    actions: [{ id: 'btnNewOrder', label: 'Nova OS' }],
-    filters: `
-      <div class="grid">
-        <select id="filter-status">
-          <option value="">Todos</option>
-          <option value="novo">Novo</option>
-          <option value="em_andamento">Em andamento</option>
-          <option value="concluido">Concluído</option>
-          <option value="cancelado">Cancelado</option>
-        </select>
-        <input type="date" id="filter-from" />
-        <input type="date" id="filter-to" />
-        <button class="btn" id="applyFilters">Filtrar</button>
-      </div>`
+    actions: [{ id: 'btnNewOrder', label: 'Nova OS' }]
   });
   appContainer.innerHTML = `
-      <div id="orders-list"></div>
-    `;
+    <div class="card container-md mb-md">
+      <div class="input-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 2a8 8 0 105.293 14.293l4.707 4.707 1.414-1.414-4.707-4.707A8 8 0 0010 2zm0 2a6 6 0 110 12A6 6 0 0110 4z"/>
+        </svg>
+        <input id="search" class="input" type="search" placeholder="Buscar..." />
+      </div>
+    </div>
+    <div id="orders-list"></div>
+  `;
 
-    document.getElementById('btnNewOrder').onclick = () => location.hash = '#orders/new';
-    document.getElementById('applyFilters').onclick = () => applyFilters();
-    renderOrdersTable(orders);
-
-
-  async function applyFilters() {
-    const status = document.getElementById('filter-status').value || null;
-    const fromVal = document.getElementById('filter-from').value;
-    const toVal   = document.getElementById('filter-to').value;
-    const from = fromVal ? Timestamp.fromDate(new Date(fromVal)) : null;
-    const to   = toVal   ? Timestamp.fromDate(new Date(toVal))   : null;
-    const list = await getOrders({ status, from, to });
-    for (const o of list) {
-      if (!customerCache[o.customerId]) {
-        customerCache[o.customerId] = (await getCustomerById(o.customerId))?.name || '-';
-      }
-      o.customerName = customerCache[o.customerId];
-      if (o.vehicleId && !vehicleCache[o.vehicleId]) {
-        const v = await getVehicleById(o.vehicleId);
-        vehicleCache[o.vehicleId] = v?.plate || v?.model || '';
-      }
-      o.vehicleLabel = vehicleCache[o.vehicleId];
-    }
-    renderOrdersTable(list);
-  }
+  document.getElementById('btnNewOrder').onclick = () => location.hash = '#orders/new';
+  const search = document.getElementById('search');
+  const render = () => {
+    const q = search.value.trim().toLowerCase();
+    const filtered = orders.filter(o =>
+      (o.customerName || '').toLowerCase().includes(q) ||
+      ((o.items && o.items[0] && o.items[0].name) || '').toLowerCase().includes(q)
+    );
+    renderOrdersTable(filtered);
+  };
+  search.addEventListener('input', render);
+  render();
 }
 function renderOrdersTable(list) {
   const body = document.getElementById('orders-list');
@@ -100,7 +82,7 @@ function renderOrdersTable(list) {
         </div>
         <div class="cell__right">
           <span class="badge badge--${statusMap[o.status]||'info'}">${o.status}</span>
-          <span class="cell__value">R$ ${(Number(o.total)||0).toFixed(2)}</span>
+          <span class="cell__value">${formatBRL(Number(o.total)||0)}</span>
         </div>
         <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
       </div>
@@ -347,6 +329,7 @@ function exportCSV(id, order) {
 }
 
 function toLocal(ts){ if(!ts) return ''; const d=ts.seconds? new Date(ts.seconds*1000):new Date(ts); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; }
+const formatBRL = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 function formatDate(ts){ if(!ts) return ''; const d=ts.seconds? new Date(ts.seconds*1000):new Date(ts); return d.toLocaleDateString(); }
 const esc  = (s='') => s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const attr = (s='') => esc(s).replace(/"/g,'&quot;');
