@@ -49,7 +49,8 @@ async function renderOrdersList() {
         <input type="date" id="filter-to" />
         <button class="btn" id="applyFilters">Filtrar</button>
       </div>`
-    appContainer.innerHTML = `
+  });
+  appContainer.innerHTML = `
       <div id="orders-list"></div>
     `;
 
