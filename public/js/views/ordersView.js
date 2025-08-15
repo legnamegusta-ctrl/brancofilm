@@ -49,18 +49,14 @@ async function renderOrdersList() {
         <input type="date" id="filter-to" />
         <button class="btn" id="applyFilters">Filtrar</button>
       </div>`
-  });
-  appContainer.innerHTML = `
-    <section class="card container-lg">
-      <table class="table table--compact table--striped mt">
-        <thead><tr><th>Cliente</th><th>Status</th><th>Total</th><th>Agendado</th><th>Criado</th><th style="min-width:80px">Ações</th></tr></thead>
-        <tbody id="orders-body"></tbody>
-      </table>
-    </section>
-  `;
-  document.getElementById('btnNewOrder').onclick = () => location.hash = '#orders/new';
-  document.getElementById('applyFilters').onclick = () => applyFilters();
-  renderOrdersTable(orders);
+    appContainer.innerHTML = `
+      <div id="orders-list"></div>
+    `;
+
+    document.getElementById('btnNewOrder').onclick = () => location.hash = '#orders/new';
+    document.getElementById('applyFilters').onclick = () => applyFilters();
+    renderOrdersTable(orders);
+
 
   async function applyFilters() {
     const status = document.getElementById('filter-status').value || null;
@@ -78,43 +74,32 @@ async function renderOrdersList() {
     renderOrdersTable(list);
   }
 }
-
 function renderOrdersTable(list) {
-  const body = document.getElementById('orders-body');
-  body.innerHTML = list.map(o => `
-    <tr>
-      <td>${esc(o.customerName || o.customerId)}</td>
-      <td><span class="badge ${o.status}">${o.status}</span></td>
-      <td>R$ ${(Number(o.total)||0).toFixed(2)}</td>
-      <td>${formatDate(o.scheduledStart)}</td>
-      <td>${formatDate(o.createdAt)}</td>
-      <td>
-        <button class="link" data-open="${o.id}">Abrir</button>
-        <button class="link" data-del="${o.id}">Excluir</button>
-      </td>
-    </tr>
-  `).join('') || '<tr><td colspan="6" class="muted">Nenhuma OS</td></tr>';
-  body.onclick = async e => {
+  const body = document.getElementById('orders-list');
+  body.innerHTML = list.map(o => {
+    const svc = (o.items && o.items[0] && o.items[0].name) || '';
+    const plate = o.vehicleId ? ' • ' + esc(o.vehicleId) : '';
+    return `
+      <div class="cell" data-open="${o.id}">
+        <div class="cell__left">
+          <span class="cell__title">${esc(o.customerName || o.customerId)}${plate}</span>
+          <span class="cell__desc">${esc(svc)} • ${formatDate(o.scheduledStart)}</span>
+        </div>
+        <div class="cell__right">
+          <span class="badge ${o.status}">${o.status}</span>
+          <span class="cell__value">R$ ${(Number(o.total)||0).toFixed(2)}</span>
+        </div>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </div>
+    `;
+  }).join('') || '<p class="muted">Nenhuma OS</p>';
+  body.onclick = e => {
     const open = e.target.closest('[data-open]');
-    const del = e.target.closest('[data-del]');
     if (open) {
       location.hash = `#orders/${open.dataset.open}`;
-    } else if (del) {
-      if (confirm('Excluir OS?')) {
-        await deleteOrder(del.dataset.del);
-        renderOrdersList();
-      }
     }
   };
 }
-
-async function renderOrderDetail(orderId) {
-  const isNew = !orderId;
-  const order = orderId ? await getOrderById(orderId) : null;
-  const clients = await getCustomers();
-  const servicos = await getServicos();
-  let vehicles = [];
-  if (order?.customerId) {
     vehicles = await getVehiclesForCustomer(order.customerId);
   }
   let users = [];
