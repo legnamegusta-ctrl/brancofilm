@@ -15,20 +15,13 @@
 </head>
 <body>
     <header id="topbar" class="topbar hidden">
-        <span class="brand">Minha Estética</span>
-        <input id="global-search" type="search" class="input" placeholder="Buscar cliente, placa, OS…" />
-        <div class="new-area">
-            <button id="btn-new" class="btn btn-primary">Novo</button>
-            <div id="new-menu" class="menu hidden">
-                <a href="#orders" data-route="#orders">Nova OS</a>
-                <a href="#clientes" data-route="#clientes">Novo Cliente</a>
-                <a href="#orcamentos" data-route="#orcamentos">Novo Orçamento</a>
-            </div>
-        </div>
+        <span class="brand" id="topbar-title"></span>
         <div class="user-area">
-            <button id="user-btn" class="link"><span id="whoami"></span></button>
+            <button id="user-btn" class="link" aria-label="Perfil">
+                <span id="whoami" hidden></span>
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </button>
             <div id="user-menu" class="menu hidden">
-                <button id="langToggle" class="link" type="button">Lang</button>
                 <select id="unit-switcher" class="admin-only" style="display:none;"></select>
                 <button id="btnSignOut" class="link">Sair</button>
             </div>
@@ -37,33 +30,10 @@
 
     <aside id="sidebar" class="sidebar hidden">
         <nav>
-            <div class="nav-group">
-                <h3>Operação</h3>
-                <a href="#dashboard" data-route="#dashboard">Dashboard</a>
-                <a href="#agenda" data-route="#agenda">Agenda</a>
-                <a href="#orders" data-route="#orders">Ordens</a>
-                <a href="#kanban" data-route="#kanban">Kanban</a>
-            </div>
-            <div class="nav-group">
-                <h3>Cadastros</h3>
-                <a href="#clientes" data-route="#clientes">Clientes</a>
-                <a href="#servicos" data-route="#servicos">Serviços</a>
-            </div>
-            <div class="nav-group">
-                <h3>Comercial</h3>
-                <a href="#orcamentos" data-route="#orcamentos">Orçamentos</a>
-            </div>
-            <div class="nav-group">
-                <h3>Análises</h3>
-                <a href="#relatorios" data-route="#relatorios">Relatórios</a>
-                <a href="#relatorios-avancados" data-route="#relatorios-avancados">Relatórios Avançados</a>
-            </div>
-            <div class="nav-group admin-only">
-                <h3>Admin</h3>
-                <a href="#usuarios" data-route="#usuarios">Usuários</a>
-                <a href="#config" data-route="#config">Configurações</a>
-                <a href="#dev/logs" data-route="#dev/logs">Logs Dev</a>
-            </div>
+            <a href="#dashboard" data-route="#dashboard">Dashboard</a>
+            <a href="#agenda" data-route="#agenda">Agenda</a>
+            <a href="#ordens" data-route="#ordens">Ordens</a>
+            <a href="#clientes" data-route="#clientes">Clientes</a>
         </nav>
     </aside>
 
@@ -78,7 +48,7 @@
             <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             <span>Agenda</span>
         </a>
-        <a href="#orders" data-route="#orders">
+        <a href="#ordens" data-route="#ordens">
             <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
             <span>Ordens</span>
         </a>
@@ -87,7 +57,7 @@
             <span>Clientes</span>
         </a>
     </nav>
-    <button id="fab-new" class="fab" aria-label="Nova OS" onclick="location.hash='#orders/new'">
+    <button id="fab-new" class="fab" aria-label="Nova OS" onclick="location.hash='#ordens/new'">
         <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     </button>
 
