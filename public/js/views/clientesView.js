@@ -66,7 +66,7 @@ export const renderClientesView = async (maybeId) => {
     </div>
 
     <div class="card">
-      <table class="table compact listrada sticky">
+      <table class="table table--compact table--striped sticky">
         <thead><tr><th>Nome</th><th>Telefone</th><th>Email</th><th>Ações</th></tr></thead>
         <tbody id="customers-list"></tbody>
       </table>
@@ -150,7 +150,7 @@ function renderCustomerList() {
 function renderCard(c) {
   return `
     <tr data-id="${c.id}">
-      <td>${esc(c.name || '-')} <span class="badge" data-badge="${c.id}">0</span></td>
+      <td>${esc(c.name || '-')} <span class="badge badge--info" data-badge="${c.id}">0</span></td>
       <td>${esc(c.phone || '-')}</td>
       <td>${esc(c.email || '-')}</td>
       <td>

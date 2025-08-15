@@ -2,7 +2,7 @@
 import {
   getOrders, getOrderById, addOrder, updateOrder, deleteOrder,
   getCustomers, getCustomerById,
-  getVehiclesForCustomer, getServicos, getUsers,
+  getVehiclesForCustomer, getVehicleById, getServicos, getUsers,
   addPayment, listPayments, deletePayment, sumPayments,
   saveSignature, getSignatureURL
 } from '../services/firestoreService.js';
@@ -26,11 +26,17 @@ export const renderOrdersView = async (param) => {
 async function renderOrdersList() {
   const orders = await getOrders();
   const customerCache = {};
+  const vehicleCache = {};
   for (const o of orders) {
     if (!customerCache[o.customerId]) {
       customerCache[o.customerId] = (await getCustomerById(o.customerId))?.name || '-';
     }
     o.customerName = customerCache[o.customerId];
+    if (o.vehicleId && !vehicleCache[o.vehicleId]) {
+      const v = await getVehicleById(o.vehicleId);
+      vehicleCache[o.vehicleId] = v?.plate || v?.model || '';
+    }
+    o.vehicleLabel = vehicleCache[o.vehicleId];
   }
   window.setPageHeader({
     title: 'Ordens',
@@ -71,6 +77,11 @@ async function renderOrdersList() {
         customerCache[o.customerId] = (await getCustomerById(o.customerId))?.name || '-';
       }
       o.customerName = customerCache[o.customerId];
+      if (o.vehicleId && !vehicleCache[o.vehicleId]) {
+        const v = await getVehicleById(o.vehicleId);
+        vehicleCache[o.vehicleId] = v?.plate || v?.model || '';
+      }
+      o.vehicleLabel = vehicleCache[o.vehicleId];
     }
     renderOrdersTable(list);
   }
@@ -79,7 +90,8 @@ function renderOrdersTable(list) {
   const body = document.getElementById('orders-list');
   body.innerHTML = list.map(o => {
     const svc = (o.items && o.items[0] && o.items[0].name) || '';
-    const plate = o.vehicleId ? ' • ' + esc(o.vehicleId) : '';
+    const plate = o.vehicleLabel ? ' • ' + esc(o.vehicleLabel) : '';
+    const statusMap = { novo: 'info', em_andamento: 'warning', concluido: 'success', cancelado: 'danger' };
     return `
       <div class="cell" data-open="${o.id}">
         <div class="cell__left">
@@ -87,7 +99,7 @@ function renderOrdersTable(list) {
           <span class="cell__desc">${esc(svc)} • ${formatDate(o.scheduledStart)}</span>
         </div>
         <div class="cell__right">
-          <span class="badge ${o.status}">${o.status}</span>
+          <span class="badge badge--${statusMap[o.status]||'info'}">${o.status}</span>
           <span class="cell__value">R$ ${(Number(o.total)||0).toFixed(2)}</span>
         </div>
         <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
