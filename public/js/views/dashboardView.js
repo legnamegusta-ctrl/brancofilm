@@ -12,20 +12,17 @@ const customerCache = {};
 export async function renderDashboardView() {
   const root = document.getElementById('page-content');
   if (!root) throw new Error('#page-content não encontrado');
+  window.setPageHeader({ title: 'Dashboard' });
   root.innerHTML = `
-  <header class="page-header">
-    <h1 class="page-title">Dashboard</h1>
-    <p class="page-subtitle muted"></p>
-  </header>
   <section class="kpi-grid">
     <div class="kpi-card"><span class="kpi-title">OS Abertas</span><span class="kpi-value">--</span></div>
     <div class="kpi-card"><span class="kpi-title">Hoje</span><span class="kpi-value">--</span></div>
     <div class="kpi-card"><span class="kpi-title">Faturamento</span><span class="kpi-value">--</span></div>
     <div class="kpi-card"><span class="kpi-title">Clientes</span><span class="kpi-value">--</span></div>
   </section>
-  <section>
+  <section class="card mt">
     <h2 class="section-title">Hoje</h2>
-    <div id="dash-today" class="card"></div>
+    <div id="dash-today"></div>
   </section>`;
 
   try {
