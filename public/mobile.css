@@ -204,3 +204,15 @@ main.main {
 .badge--warning { background:var(--warning); color:#fff; }
 .badge--success { background:var(--success); color:#fff; }
 .badge--danger { background:var(--danger); color:#fff; }
+.page-header{margin-bottom:16px;}
+.page-title{font-size:22px;font-weight:600;margin:0;}
+.page-subtitle{margin:4px 0 0;font-size:14px;color:var(--muted);}
+.section-title{font-size:16px;font-weight:600;margin:0 0 8px;}
+.muted{color:var(--muted);}
+.cell__right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+.cell svg.chevron{width:16px;height:16px;color:var(--muted);margin-left:8px;}
+.sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);backdrop-filter:blur(2px);z-index:90;}
+.sheet{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top-left-radius:16px;border-top-right-radius:16px;padding:16px;box-shadow:0 -4px 16px rgba(0,0,0,.1);z-index:100;animation:sheetUp .2s ease-out;}
+.sheet-handle{width:40px;height:4px;background:var(--line);border-radius:2px;margin:0 auto 12px;}
+.sheet-actions{display:flex;justify-content:space-between;margin-top:16px;}
+@keyframes sheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}

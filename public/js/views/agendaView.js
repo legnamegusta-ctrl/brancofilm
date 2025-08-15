@@ -49,6 +49,10 @@ export const renderAgendaView = async () => {
   if (!FC || !FC.Calendar) throw new Error('FullCalendar não carregado — verifique CDNs e ordem dos scripts.');
   calendar = new FC.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
+    locale: 'pt-br',
+    headerToolbar: { left: 'title', right: 'today prev,next dayGridMonth,timeGridDay' },
+    buttonText: { today: 'Hoje', month: 'Mês', day: 'Dia' },
+    navLinks: true,
     selectable: true,
     height: 'auto',
     events,
@@ -108,41 +112,42 @@ async function openNewModal(start=null, end=null) {
   const clients = await getCustomers();
   const servicos = await getServicos();
   modalPlaceholder.innerHTML = `
-    <div class="modal"><div class="card">
-      <div class="card-header">Novo agendamento</div>
-      <div class="card-body">
-        <form id="agenda-form" class="grid">
-          <label>Cliente*
-            <select id="aCustomer" required>
-              <option value="">—</option>
-              ${clients.map(c=>`<option value="${c.id}">${esc(c.name||'-')}</option>`).join('')}
-            </select>
-          </label>
-          <label>Veículo*
-            <select id="aVehicle" required><option value="">—</option></select>
-          </label>
-          <label>Serviço*
-            <select id="aService" required>
-              <option value="">—</option>
-              ${servicos.map(s=>`<option value="${s.id}" data-name="${attr(s.name)}" data-price="${Number(s.price)||0}">${esc(s.name)}</option>`).join('')}
-            </select>
-          </label>
-          <label>Início* <input id="aStart" type="datetime-local" required value="${start?toLocal(start):''}" /></label>
-          <label>Fim <input id="aEnd" type="datetime-local" value="${end?toLocal(end):''}" /></label>
-          <label>Notas <textarea id="aNotes"></textarea></label>
-          <div class="card-actions">
-            <button class="btn">Criar</button>
-            <button type="button" class="link" id="aCancel">Cancelar</button>
-          </div>
-        </form>
-      </div>
-    </div></div>
+    <div class="sheet-overlay" id="aOverlay"></div>
+    <div class="sheet" id="agendaSheet">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title">Novo agendamento</h2>
+      <form id="agenda-form" class="grid">
+        <label>Cliente*
+          <select id="aCustomer" required>
+            <option value="">—</option>
+            ${clients.map(c=>`<option value="${c.id}">${esc(c.name||'-')}</option>`).join('')}
+          </select>
+        </label>
+        <label>Veículo*
+          <select id="aVehicle" required><option value="">—</option></select>
+        </label>
+        <label>Serviço*
+          <select id="aService" required>
+            <option value="">—</option>
+            ${servicos.map(s=>`<option value="${s.id}" data-name="${attr(s.name)}" data-price="${Number(s.price)||0}">${esc(s.name)}</option>`).join('')}
+          </select>
+        </label>
+        <label>Início* <input id="aStart" type="datetime-local" required value="${start?toLocal(start):''}" /></label>
+        <label>Fim <input id="aEnd" type="datetime-local" value="${end?toLocal(end):''}" /></label>
+        <label>Notas <textarea id="aNotes"></textarea></label>
+        <div class="sheet-actions">
+          <button type="button" class="btn btn-ghost" id="aCancel">Cancelar</button>
+          <button class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
   `;
   document.getElementById('aCustomer').onchange = async e => {
     const vs = await getVehiclesForCustomer(e.target.value);
     document.getElementById('aVehicle').innerHTML =
       '<option value="">—</option>' + vs.map(v=>`<option value="${v.id}">${esc(v.model||v.plate||'-')}</option>`).join('');
   };
+  document.getElementById("aOverlay").onclick = closeModal;
   document.getElementById('aCancel').onclick = closeModal;
   document.getElementById('agenda-form').onsubmit = async e => {
     e.preventDefault();

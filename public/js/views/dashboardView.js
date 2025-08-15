@@ -13,17 +13,19 @@ export async function renderDashboardView() {
   const root = document.getElementById('page-content');
   if (!root) throw new Error('#page-content não encontrado');
   root.innerHTML = `
-  <section class="mobile container">
-    <header class="page-header">
-      <h1>Dashboard</h1>
-    </header>
-    <div class="kpi-grid">
-      <div class="kpi-card"><span class="kpi-title">OS Abertas</span><span class="kpi-value">--</span></div>
-      <div class="kpi-card"><span class="kpi-title">Hoje</span><span class="kpi-value">--</span></div>
-      <div class="kpi-card"><span class="kpi-title">Faturamento</span><span class="kpi-value">--</span></div>
-      <div class="kpi-card"><span class="kpi-title">Clientes</span><span class="kpi-value">--</span></div>
-    </div>
-    <div id="dash-recent"></div>
+  <header class="page-header">
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-subtitle muted"></p>
+  </header>
+  <section class="kpi-grid">
+    <div class="kpi-card"><span class="kpi-title">OS Abertas</span><span class="kpi-value">--</span></div>
+    <div class="kpi-card"><span class="kpi-title">Hoje</span><span class="kpi-value">--</span></div>
+    <div class="kpi-card"><span class="kpi-title">Faturamento</span><span class="kpi-value">--</span></div>
+    <div class="kpi-card"><span class="kpi-title">Clientes</span><span class="kpi-value">--</span></div>
+  </section>
+  <section>
+    <h2 class="section-title">Hoje</h2>
+    <div id="dash-today" class="card"></div>
   </section>`;
 
   try {
@@ -43,7 +45,7 @@ export async function renderDashboardView() {
     kpis[3].textContent = clients;
 
     const recent = await getNextSchedules(5);
-    const dashRecent = document.getElementById('dash-recent');
+    const dashToday = document.getElementById('dash-today');
     if (recent.length) {
       const items = [];
       for (const o of recent) {
@@ -52,9 +54,9 @@ export async function renderDashboardView() {
         }
         items.push(`<div><a href="#orders/${o.id}">${esc(customerCache[o.customerId])} - ${esc(o.vehicleId)} - ${formatDate(o.scheduledStart)}</a></div>`);
       }
-      dashRecent.innerHTML = items.join('');
+      dashToday.innerHTML = items.join('');
     } else {
-      dashRecent.innerHTML = '<p class="muted">Nenhum agendamento</p>';
+      dashToday.innerHTML = '<p class="muted"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Nada hoje</p>'
     }
   } catch (e) {
     console.error(e);
