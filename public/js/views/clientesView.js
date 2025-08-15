@@ -51,22 +51,16 @@ export const renderClientesView = async (maybeId) => {
     </div>
 
     <div class="card container-md mb-md">
-      <div class="flex gap-sm">
-        <div class="input-icon" style="flex:1;">
-          <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <path d="M10 2a8 8 0 105.293 14.293l4.707 4.707 1.414-1.414-4.707-4.707A8 8 0 0010 2zm0 2a6 6 0 110 12A6 6 0 0110 4z"/>
-          </svg>
-          <input id="search" class="input" type="search" placeholder="Buscar por nome, telefone ou email…" />
-        </div>
-        <select id="sort" class="input">
-          <option value="date">Mais recentes</option>
-          <option value="name">A–Z</option>
-        </select>
+      <div class="input-icon">
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 2a8 8 0 105.293 14.293l4.707 4.707 1.414-1.414-4.707-4.707A8 8 0 0010 2zm0 2a6 6 0 110 12A6 6 0 0110 4z"/>
+        </svg>
+        <input id="search" class="input" type="search" placeholder="Buscar por nome, telefone ou email…" />
       </div>
     </div>
 
     <div class="card">
-      <table class="table table--compact table--striped sticky">
+      <table class="table table--compact table--striped">
         <thead><tr><th>Nome</th><th>Telefone</th><th>Email</th><th>Ações</th></tr></thead>
         <tbody id="customers-list"></tbody>
       </table>
@@ -76,7 +70,6 @@ export const renderClientesView = async (maybeId) => {
 
   document.getElementById('form-new-customer').onsubmit = onAddCustomer;
   document.getElementById('search').addEventListener('input', renderCustomerList);
-  document.getElementById('sort').addEventListener('change', renderCustomerList);
   document.getElementById('load-more').onclick = () => loadCustomers();
   document.getElementById('header-new-customer').onclick = () => document.getElementById('cName').focus();
 
@@ -116,23 +109,20 @@ async function loadCustomers(reset = false) {
   lastId = res.lastId;
   customers = customers.concat(res);
   renderCustomerList();
-  document.getElementById('load-more').hidden = !lastId || document.getElementById('sort').value !== 'date';
+  document.getElementById('load-more').hidden = !lastId;
 }
 
 function renderCustomerList() {
   const container = document.getElementById('customers-list');
   const search = document.getElementById('search').value.toLowerCase();
-  const sort = document.getElementById('sort').value;
 
   let list = customers.slice();
   if (search) {
     list = list.filter(c =>
       c.name?.toLowerCase().includes(search) ||
-      c.phone?.toLowerCase().includes(search)
+      c.phone?.toLowerCase().includes(search) ||
+      c.email?.toLowerCase().includes(search)
     );
-  }
-  if (sort === 'name') {
-    list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   }
 
   if (!list.length) {
