@@ -101,6 +101,13 @@ function renderOrdersTable(list) {
     }
   };
 }
+async function renderOrderDetail(orderId) {
+  const isNew = !orderId;
+  let order = isNew ? null : await getOrderById(orderId);
+  const clients = await getCustomers();
+  const servicos = await getServicos();
+  let vehicles = [];
+  if (order?.customerId) {
     vehicles = await getVehiclesForCustomer(order.customerId);
   }
   let users = [];
