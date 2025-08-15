@@ -17,6 +17,8 @@ import { renderDevLogsView } from './views/devLogsView.js';
 import { renderUiKitView } from './views/uiKitView.js';
 import { auth } from './firebase-config.js';
 
+window.__MVP__ = true;
+
 const appContainer = document.getElementById('page-content');
 const pageHeader = document.getElementById('page-header');
 const netStatus = document.getElementById('net-status');
@@ -25,6 +27,21 @@ const tabbarLinks = document.querySelectorAll('#tabbar a[data-route]');
 const tabbar = document.getElementById('tabbar');
 const fabNew = document.getElementById('fab-new');
 const globalSearch = document.getElementById('global-search');
+const topbarTitle = document.getElementById('topbar-title');
+
+const MVP_ROUTES = ['#login', '#dashboard', '#agenda', '#ordens', '#clientes'];
+const ROUTE_TITLES = {
+  '#dashboard': 'Dashboard',
+  '#agenda': 'Agenda',
+  '#ordens': 'Ordens',
+  '#clientes': 'Clientes',
+  '#login': 'Login'
+};
+
+function renderNotAvailable() {
+  appContainer.innerHTML = '<p class="center">Em breve</p>';
+  pageHeader.style.display = 'none';
+}
 
 window.setPageHeader = ({ title = '', breadcrumbs = [], actions = [], filters = '' }) => {
   const crumbs = breadcrumbs.length ? `<nav class="breadcrumbs">${breadcrumbs.join(' / ')}</nav>` : '';
@@ -66,6 +83,7 @@ const routes = {
   '#clientes': renderClientesView,
   '#servicos': renderServicosView,
   '#orders': renderOrdersView,
+  '#ordens': renderOrdersView,
   '#kanban': renderKanbanView,
   '#my-work': renderMyWorkView,
   '#orcamentos': renderQuotesView,
@@ -89,6 +107,11 @@ export function navigate() {
   pageHeader.style.display = 'none';
   pageHeader.innerHTML = '';
 
+  if (hash.startsWith('#orders')) {
+    location.hash = hash.replace('#orders', '#ordens');
+    return;
+  }
+
   if (hash === '#login') {
     tabbar?.style.setProperty('display', 'none');
     fabNew?.style.setProperty('display', 'none');
@@ -110,11 +133,18 @@ export function navigate() {
   if (hash === '#login') {
     appContainer.innerHTML = '';
     pageHeader.style.display = 'none';
+    topbarTitle && (topbarTitle.textContent = ROUTE_TITLES['#login']);
     return;
   }
 
   const [mainPath, ...rest] = hash.split('/');
   const param = rest.join('/') || null;
+
+  if (!MVP_ROUTES.includes(mainPath)) {
+    topbarTitle && (topbarTitle.textContent = 'Em breve');
+    renderNotAvailable();
+    return;
+  }
 
   const adminRoutes = ['#usuarios', '#config', '#dev', '#unidades'];
   const role = window.sessionState?.role;
@@ -129,6 +159,8 @@ export function navigate() {
   activeLink?.classList.add('active');
   const activeTab = document.querySelector(`#tabbar a[data-route="${mainPath}"]`);
   activeTab?.classList.add('active');
+
+  topbarTitle && (topbarTitle.textContent = ROUTE_TITLES[mainPath] || '');
 
   const fn = routes[mainPath];
   if (typeof fn === 'function') {
