@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BrancoFilm - Oficina de Insufilm</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>BrancoFilm</h1>
+    <nav>
+      <a href="#servicos">Serviços</a>
+      <a href="#agenda">Agendamento</a>
+      <a href="#contato">Contato</a>
+    </nav>
+  </header>
+
+  <section id="sobre">
+    <h2>Sobre nós</h2>
+    <p>Especialistas em aplicação de insufilm automotivo com qualidade e garantia.</p>
+  </section>
+
+  <section id="servicos">
+    <h2>Serviços</h2>
+    <ul>
+      <li>Insufilm Automotivo</li>
+      <li>Películas Residenciais</li>
+      <li>Remoção de Insufilm</li>
+    </ul>
+  </section>
+
+  <section id="agenda">
+    <h2>Agende um horário</h2>
+    <form id="form-agenda">
+      <label>Nome:<br /><input type="text" name="nome" required /></label><br />
+      <label>Contato:<br /><input type="text" name="contato" required /></label><br />
+      <label>Modelo do carro:<br /><input type="text" name="modelo" required /></label><br />
+      <label>Tipo de película:<br /><input type="text" name="pelicula" required /></label><br />
+      <label>Data e hora:<br /><input type="datetime-local" name="data" required /></label><br />
+      <button type="submit">Enviar</button>
+    </form>
+    <p id="agenda-msg" class="hidden"></p>
+  </section>
+
+  <section id="contato">
+    <h2>Contato</h2>
+    <form id="form-contato">
+      <label>Nome:<br /><input type="text" name="nome" required /></label><br />
+      <label>E-mail:<br /><input type="email" name="email" required /></label><br />
+      <label>Mensagem:<br /><textarea name="mensagem" required></textarea></label><br />
+      <button type="submit">Enviar</button>
+    </form>
+    <p id="contato-msg" class="hidden"></p>
+  </section>
+
+  <footer>
+    <p>&copy; 2024 BrancoFilm</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
