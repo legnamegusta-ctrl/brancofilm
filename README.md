@@ -1,6 +1,7 @@
 # Brancofilm
 
 Aplicação para gerenciamento de uma oficina de instalação de insufilm.
+Inclui um site simples em HTML/CSS/JS com formulários de contato e agendamento.
 
 ## Desenvolvimento
 
@@ -8,7 +9,7 @@ Aplicação para gerenciamento de uma oficina de instalação de insufilm.
    ```bash
    npm install
    ```
-2. Execute o servidor de desenvolvimento:
+2. Execute o servidor de desenvolvimento e acesse `http://localhost:3000`:
    ```bash
    npm start
    ```
