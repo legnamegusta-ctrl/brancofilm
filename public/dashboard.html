@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - BrancoFilm</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>BrancoFilm Dashboard</h1>
+    <nav>
+      <a href="index.html">Home</a>
+    </nav>
+  </header>
+
+  <section id="summary">
+    <h2>Summary</h2>
+    <div>
+      <h3>Low Stock Items</h3>
+      <ul id="low-stock-list"></ul>
+    </div>
+    <div>
+      <h3>Current Cash Balance</h3>
+      <p id="cash-balance">0</p>
+    </div>
+  </section>
+
+  <section id="inventory">
+    <h2>Inventory</h2>
+    <form id="inventory-form">
+      <input type="text" name="name" placeholder="Name" required />
+      <input type="number" name="quantity" placeholder="Quantity" required />
+      <input type="number" step="0.01" name="cost" placeholder="Cost" required />
+      <input type="number" name="threshold" placeholder="Threshold" required />
+      <button type="submit">Add Item</button>
+    </form>
+    <table id="inventory-list">
+      <thead>
+        <tr><th>Name</th><th>Qty</th><th>Cost</th><th>Threshold</th><th>Actions</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section id="transactions">
+    <h2>Transactions</h2>
+    <form id="transaction-form">
+      <select name="type">
+        <option value="in">In</option>
+        <option value="out">Out</option>
+      </select>
+      <input type="number" step="0.01" name="amount" placeholder="Amount" required />
+      <input type="date" name="date" required />
+      <input type="text" name="note" placeholder="Note" />
+      <button type="submit">Add Transaction</button>
+    </form>
+    <table id="transaction-list">
+      <thead>
+        <tr><th>Type</th><th>Amount</th><th>Date</th><th>Note</th><th>Actions</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <script type="module" src="dashboard.js"></script>
+</body>
+</html>
