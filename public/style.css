@@ -27,6 +27,21 @@ section {
   display: none;
 }
 
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+table, th, td {
+  border: 1px solid #ccc;
+}
+
+th, td {
+  padding: 0.5rem;
+  text-align: left;
+}
+
 footer {
   background: #f2f2f2;
   text-align: center;
